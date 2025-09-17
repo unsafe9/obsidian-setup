@@ -1,17 +1,16 @@
-async function renameImagesInFile(tp, file, useAI = false) {
-  const originalContent = await tp.app.vault.read(file);
-  let newContent = originalContent;
+async function renameImages(tp, parser, useAI = false) {
+  const content = parser.content;
 
   const imageLinkRegex = /!\[\[([^|\]]+?)]]/g;
   const pastedImageRegex = /Pasted image \d{14}\.(png|jpg|jpeg|gif|bmp|webp)/;
 
-  const matches = [...originalContent.matchAll(imageLinkRegex)];
+  const matches = [...content.matchAll(imageLinkRegex)];
   const imagesToRename = [];
 
   for (const match of matches) {
     const linkText = match[1]; // text in [[...]]
     if (pastedImageRegex.test(linkText)) {
-      const imageFile = tp.app.metadataCache.getFirstLinkpathDest(linkText, file.path);
+      const imageFile = tp.app.metadataCache.getFirstLinkpathDest(linkText, parser.file.path);
       if (imageFile) {
         imagesToRename.push({
           oldLinkText: linkText,
@@ -22,7 +21,7 @@ async function renameImagesInFile(tp, file, useAI = false) {
   }
 
   if (imagesToRename.length === 0) {
-    return;
+    return false; // No changes made
   }
 
   for (const item of imagesToRename) {
@@ -37,12 +36,12 @@ Use 3-8 English words with underscores.
 Your response must contain ONLY the filename itself without extension, with no explanation or other text.`;
 
       newName = await tp.user.cli(`gemini -m gemini-2.5-flash -p "${prompt}"`);
-      if (!aiName || aiName.trim() === '') {
+      if (!newName || newName.trim() === '') {
         console.warn(`AI failed to provide a name for ${imageFile.path}`);
         continue;
       }
     } else {
-      newName = file.basename.replaceAll(' ', '_');
+      newName = parser.title.replaceAll(' ', '_');
     }
 
     // sanitize the output
@@ -51,8 +50,10 @@ Your response must contain ONLY the filename itself without extension, with no e
     const newFilePath = imageFile.path.replace('Pasted image ', newName + '_');
 
     await tp.app.fileManager.renameFile(imageFile, newFilePath);
-    new Notice(`Renamed '${imageFile.path}' to '${newFilePath}'`);
+    new Notice(`Image renamed to '${newFilePath}'`);
   }
+
+  return imagesToRename.length > 0; // Return true if any images were renamed
 }
 
-module.exports = renameImagesInFile;
+module.exports = renameImages;

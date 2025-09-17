@@ -68,6 +68,11 @@ class FileParser {
       this.content = rawContent.trim();
     }
 
+    // If no H1 title, use the file name
+    if (!this.title) {
+      this.title = this.file.basename;
+    }
+
     return this;
   }
 

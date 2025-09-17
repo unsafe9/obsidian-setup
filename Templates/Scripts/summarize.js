@@ -4,7 +4,7 @@ It must include all key arguments, main points, and conclusions from the origina
 Be careful not to lose any critical information.
 Ignore the frontmatter and the first H1 title below the frontmatter if they exist, only summarize the content below.`;
 
-  const res = await tp.user.cli(`gemini -m gemini-2.5-flash -p "${prompt}"`);
+  return await tp.user.cli(`gemini -m gemini-2.5-flash -p "${prompt}"`);
 }
 
 module.exports = summarize;
