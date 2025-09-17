@@ -23,6 +23,8 @@
         "daily_note_template": "Templater/Daily Note.md"
     },
     "setup": {
-        "backup_existing_config": false
+        "backup_existing_config": false,
+        "backup_directory": ".obsidian-setup-backup",
+        "overwrite_existing_files": true
     }
 }

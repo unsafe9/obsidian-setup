@@ -33,6 +33,7 @@ class ObsidianSetup:
         self.config_path = self.vault_path / "config.json"
         self.source_config_path = self.source_path / "config.json"
         self.config = None
+        self.backup_dir = None  # Will be set after config is loaded
 
     def load_config(self):
         """Load configuration from config.json"""
@@ -43,7 +44,13 @@ class ObsidianSetup:
 
         try:
             with open(self.config_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                config = json.load(f)
+
+            # Set backup directory from config
+            backup_dir_name = config.get("setup", {}).get("backup_directory", ".obsidian-setup-backup")
+            self.backup_dir = self.vault_path / backup_dir_name
+
+            return config
         except Exception as e:
             print(f"❌ Error loading configuration: {e}")
             sys.exit(1)
@@ -116,6 +123,38 @@ class ObsidianSetup:
 
         return sorted(command_files)
 
+    def create_backup(self, source_path, backup_name):
+        """Create a backup of a file or directory in the backup directory"""
+        # Ensure config is loaded
+        if not self.config:
+            self.config = self.load_config()
+
+        if not self.config.get("setup", {}).get("backup_existing_config", False):
+            return False
+
+        source = Path(source_path)
+        if not source.exists():
+            return False
+
+        # Create backup directory if it doesn't exist
+        self.backup_dir.mkdir(exist_ok=True)
+
+        backup_path = self.backup_dir / backup_name
+
+        try:
+            if source.is_file():
+                shutil.copy2(source, backup_path)
+            else:
+                if backup_path.exists():
+                    shutil.rmtree(backup_path)
+                shutil.copytree(source, backup_path)
+
+            print(f"📋 Backed up to: {backup_path}")
+            return True
+        except Exception as e:
+            print(f"⚠️ Failed to backup {source}: {e}")
+            return False
+
     def copy_files_to_vault(self):
         """Copy config.json and Templater folder to the target vault"""
         print("📁 Copying files to target vault...")
@@ -130,27 +169,44 @@ class ObsidianSetup:
             print(f"❌ Source Templater folder not found: {source_templater_path}")
             return False
 
+        # Load config to check overwrite setting
+        if not self.config:
+            # Load config from source first to get settings
+            try:
+                with open(self.source_config_path, 'r', encoding='utf-8') as f:
+                    temp_config = json.load(f)
+                overwrite_files = temp_config.get("setup", {}).get("overwrite_existing_files", True)
+            except:
+                overwrite_files = True  # Default to overwrite if can't read config
+        else:
+            overwrite_files = self.config.get("setup", {}).get("overwrite_existing_files", True)
+
         try:
-            # Copy config.json
+            # Handle config.json
             if self.config_path.exists():
-                backup_config = self.config_path.with_suffix('.json.backup')
-                shutil.copy2(self.config_path, backup_config)
-                print(f"📋 Backed up existing config.json to: {backup_config}")
+                if overwrite_files:
+                    self.create_backup(self.config_path, "config.json")
+                    shutil.copy2(self.source_config_path, self.config_path)
+                    print(f"✅ Copied config.json to: {self.config_path}")
+                else:
+                    print(f"⚠️ Skipped config.json (already exists): {self.config_path}")
+            else:
+                shutil.copy2(self.source_config_path, self.config_path)
+                print(f"✅ Copied config.json to: {self.config_path}")
 
-            shutil.copy2(self.source_config_path, self.config_path)
-            print(f"✅ Copied config.json to: {self.config_path}")
-
-            # Copy Templater folder
+            # Handle Templater folder
             target_templater_path = self.vault_path / "Templater"
             if target_templater_path.exists():
-                backup_templater = self.vault_path / "Templater.backup"
-                if backup_templater.exists():
-                    shutil.rmtree(backup_templater)
-                shutil.move(target_templater_path, backup_templater)
-                print(f"📋 Backed up existing Templater folder to: {backup_templater}")
-
-            shutil.copytree(source_templater_path, target_templater_path)
-            print(f"✅ Copied Templater folder to: {target_templater_path}")
+                if overwrite_files:
+                    self.create_backup(target_templater_path, "Templater")
+                    shutil.rmtree(target_templater_path)  # Remove existing folder
+                    shutil.copytree(source_templater_path, target_templater_path)
+                    print(f"✅ Copied Templater folder to: {target_templater_path}")
+                else:
+                    print(f"⚠️ Skipped Templater folder (already exists): {target_templater_path}")
+            else:
+                shutil.copytree(source_templater_path, target_templater_path)
+                print(f"✅ Copied Templater folder to: {target_templater_path}")
 
             return True
 

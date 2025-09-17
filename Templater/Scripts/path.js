@@ -1,5 +1,6 @@
 const path = require('path');
 
+// These paths will be overridden by the config.json file
 const notePaths = ['/'];
 const clippingPaths = ['Clippings'];
 
