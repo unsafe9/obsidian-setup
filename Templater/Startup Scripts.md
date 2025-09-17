@@ -1,6 +1,6 @@
 <%*
 tp.app.vault.on('create', async file => {
-  if (tp.user.path.inDir(file.path, ['Clippings'])) {
+  if (tp.user.path.inDir(file.path, tp.user.path.getClippingPaths())) {
     await tp.user.refineClipping(tp, file);
   }
 });

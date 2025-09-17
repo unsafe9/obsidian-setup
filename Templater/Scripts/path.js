@@ -1,7 +1,7 @@
 const path = require('path');
 
-// TODO: make this configurable
-const notePaths = ['Notes', 'Archives', 'Daily Notes'];
+const notePaths = ['/'];
+const clippingPaths = ['Clippings'];
 
 /**
  * Checks if a given path is within any of the specified parent directories.
@@ -22,6 +22,10 @@ function isNotePath(p) {
 
 function getNotePaths() {
   return notePaths;
+}
+
+function getClippingPaths() {
+  return clippingPaths;
 }
 
 function join(...paths) {
