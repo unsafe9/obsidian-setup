@@ -17,7 +17,7 @@ Usage:
 """
 
 import json
-import os
+import re
 import sys
 import shutil
 from pathlib import Path
@@ -85,27 +85,6 @@ class ObsidianSetup:
         print("✅ All required plugins are installed.")
         return True
 
-    def get_template_files(self):
-        """Find template files in the Templates folder"""
-        templates_folder = self.config["paths"]["templates_folder"]
-        templates_path = self.vault_path / templates_folder
-
-        if not templates_path.exists():
-            print(f"❌ Templates folder not found: {templates_path}")
-            return []
-
-        template_files = []
-        startup_template = self.config["setup"]["startup_template"]
-
-        for file_path in templates_path.rglob("*.md"):
-            relative_path = file_path.relative_to(self.vault_path)
-            relative_path_str = str(relative_path)
-
-            # Exclude startup script from hotkey templates
-            if relative_path_str != startup_template:
-                template_files.append(relative_path_str)
-
-        return sorted(template_files)
 
     def get_command_templates(self):
         """Find template files specifically in the Commands folder for hotkey registration"""
@@ -236,7 +215,6 @@ class ObsidianSetup:
             clipping_paths_str = str(clipping_paths).replace("'", "'")
 
             # Find and replace the arrays
-            import re
             content = re.sub(
                 r'const notePaths = \[.*?\];',
                 f"const notePaths = {note_paths_str};",
@@ -301,12 +279,8 @@ class ObsidianSetup:
                 with open(self.templater_data_path, 'r', encoding='utf-8') as f:
                     existing_config = json.load(f)
 
-                # Create backup if enabled
-                if self.config["setup"]["backup_existing_config"]:
-                    backup_path = self.templater_data_path.with_suffix('.json.backup')
-                    with open(backup_path, 'w', encoding='utf-8') as f:
-                        json.dump(existing_config, f, indent=2, ensure_ascii=False)
-                    print(f"📋 Backed up existing configuration to: {backup_path}")
+                # Create backup using unified backup system
+                self.create_backup(self.templater_data_path, "data.json")
             else:
                 existing_config = {}
 
