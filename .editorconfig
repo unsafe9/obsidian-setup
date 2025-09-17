@@ -9,3 +9,8 @@ trim_trailing_whitespace = true
 [*.js]
 indent_style = space
 indent_size = 2
+
+[Templates/*.md]
+indent_style = space
+indent_size = 2
+
