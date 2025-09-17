@@ -255,9 +255,7 @@ class ObsidianSetup:
                 existing_config = {}
 
             # Get command template files for hotkey registration
-            command_templates = []
-            if self.config["setup"]["auto_discover_templates"]:
-                command_templates = self.get_command_templates()
+            command_templates = self.get_command_templates()
 
             # Create folder templates dynamically
             folder_templates = self.create_folder_templates()

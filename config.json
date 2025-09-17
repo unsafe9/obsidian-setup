@@ -23,7 +23,6 @@
         "daily_note_template": "Templater/Daily Note.md"
     },
     "setup": {
-        "backup_existing_config": true,
-        "auto_discover_templates": true
+        "backup_existing_config": false
     }
 }
