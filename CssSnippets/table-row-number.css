@@ -1,0 +1,23 @@
+table {
+  counter-reset: rowNumber;
+}
+
+table tr>td:first-child {
+  counter-increment: rowNumber;
+  position: relative;
+  padding-left: 1.5em !important;
+}
+
+.markdown-reading-view table tr>td:first-child {
+  padding-left: 2em !important;
+}
+
+table tr td:first-child::before {
+  content: counter(rowNumber);
+  opacity: 0.7;
+  font-size: 0.8em;
+
+  position: absolute;
+  left: 0.5em;
+  top: 0.5em;
+}

@@ -135,7 +135,7 @@ class ObsidianSetup:
             return False
 
     def copy_files_to_vault(self):
-        """Copy config.json and Templater folder to the target vault"""
+        """Copy config.json, Templater folder, and CssSnippets to the target vault"""
         print("📁 Copying files to target vault...")
 
         # Check if source files exist
@@ -186,6 +186,28 @@ class ObsidianSetup:
             else:
                 shutil.copytree(source_templater_path, target_templater_path)
                 print(f"✅ Copied Templater folder to: {target_templater_path}")
+
+            # Handle CssSnippets folder
+            source_css_snippets_path = self.source_path / "CssSnippets"
+            if source_css_snippets_path.exists():
+                target_snippets_path = self.obsidian_path / "snippets"
+                target_snippets_path.mkdir(parents=True, exist_ok=True)
+
+                # Copy each CSS file from CssSnippets to .obsidian/snippets
+                for css_file in source_css_snippets_path.glob("*.css"):
+                    target_css_file = target_snippets_path / css_file.name
+                    if target_css_file.exists():
+                        if overwrite_files:
+                            self.create_backup(target_css_file, f"snippets_{css_file.name}")
+                            shutil.copy2(css_file, target_css_file)
+                            print(f"✅ Copied CSS snippet: {css_file.name}")
+                        else:
+                            print(f"⚠️ Skipped CSS snippet (already exists): {css_file.name}")
+                    else:
+                        shutil.copy2(css_file, target_css_file)
+                        print(f"✅ Copied CSS snippet: {css_file.name}")
+            else:
+                print(f"⚠️ Source CssSnippets folder not found: {source_css_snippets_path}")
 
             return True
 
