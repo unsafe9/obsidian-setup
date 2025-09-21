@@ -24,7 +24,7 @@ class FileParser {
     if (frontmatterMatch) {
       // Verify frontmatter is at the very beginning (no content before it)
       const beforeFrontmatter = rawContent.substring(0, frontmatterMatch.index);
-      if (beforeFrontmatter?.trim()) {
+      if (!beforeFrontmatter?.trim()) {
         hasFrontmatter = true;
         rawContent = rawContent.substring(frontmatterMatch[0].length);
       }
@@ -70,14 +70,11 @@ class FileParser {
 
     // If no H1 title, use the file name
     if (!this.title) {
-      this.title = this.basename;
+      this.title = this.file.basename.trim();
+      this.changed = true;
     }
 
     return this;
-  }
-
-  getFrontmatterProperty(key) {
-    return this.frontmatter[key];
   }
 
   setFrontmatterProperty(key, value) {
@@ -95,21 +92,15 @@ class FileParser {
     this.changed = true;
   }
 
-  hasFrontmatter() {
-    return Object.keys(this.frontmatter).length > 0;
-  }
-
-  hasTitle() {
-    return this.title?.trim();
-  }
-
   _frontmatterObjToText() {
-    if (!this.hasFrontmatter()) {
+    const keys = Object.keys(this.frontmatter);
+    if (keys.length == 0) {
       return '';
     }
 
     const lines = ['---'];
-    for (const [key, value] of Object.entries(this.frontmatter)) {
+    for (const key of keys) {
+      const value = this.frontmatter[key];
       if (Array.isArray(value)) {
         lines.push(`${key}: [${value.map(v => `"${v}"`).join(', ')}]`);
       } else if (typeof value === 'string') {
@@ -135,7 +126,7 @@ class FileParser {
     }
 
     // Add H1 title if exists
-    if (this.hasTitle()) {
+    if (this.title) {
       result += `# ${this.title}`;
       if (this.content) {
         result += '\n\n'; // Two newlines after H1

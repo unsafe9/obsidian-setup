@@ -3,28 +3,19 @@ async function syncH1Title(parser) {
   const fileName = file.basename;
   const currentTitle = parser.title;
 
-  // Normalize titles for comparison (trim whitespace, handle empty strings)
-  const normalizedCurrentTitle = (currentTitle || '').trim();
-  const normalizedFileName = (fileName || '').trim();
-
   // Skip if titles are effectively the same
-  if (normalizedCurrentTitle === normalizedFileName) {
+  if (currentTitle === fileName) {
     return false; // No changes needed
-  }
-
-  // Skip if filename is empty or invalid
-  if (!normalizedFileName) {
-    return false;
   }
 
   try {
     // Update the title to match the file name
-    parser.setTitle(normalizedFileName);
+    parser.setTitle(fileName);
 
-    if (normalizedCurrentTitle) {
-      new Notice(`Updated H1 title to match filename: ${normalizedFileName}`);
+    if (currentTitle) {
+      new Notice(`Updated H1 title to match filename: ${fileName}`);
     } else {
-      new Notice(`Created H1 title and synced with filename: ${normalizedFileName}`);
+      new Notice(`Created H1 title and synced with filename: ${fileName}`);
     }
 
     return true;
