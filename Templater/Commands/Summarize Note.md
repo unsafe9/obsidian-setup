@@ -1,6 +1,6 @@
 <%*
-const file = tp.app.vault.getAbstractFileByPath(tp.file.path(true));
-const parser = await tp.user.parseFile(tp, file);
+const parser = await tp.user.parseFile(tp);
+const file = parser.file;
 new Notice(`Summarizing '${file.path}'...`, 5000);
 const summary = await tp.user.summarize(tp, parser.content);
 

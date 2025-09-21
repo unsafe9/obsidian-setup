@@ -39,7 +39,7 @@ async function cli(command) {
   }
 }
 
-async function gemini(prompt, yolo = false, model = 'gemini-2.5-flash') {
+async function geminiCli(prompt, yolo = false, model = 'gemini-2.5-flash') {
   return cli(`gemini -m "${model}" ${yolo ? '--yolo' : ''} -p "${prompt}"`);
 }
 
@@ -75,6 +75,6 @@ async function ollama(tp, prompt, model = 'gemma3:12b', images = undefined, form
 
 module.exports = {
   cli,
-  gemini,
+  geminiCli,
   ollama,
 };

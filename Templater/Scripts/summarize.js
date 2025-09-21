@@ -7,7 +7,7 @@ Ignore the frontmatter and the first H1 title below the frontmatter if they exis
 Text to summarize:
 ${text}`;
 
-  return tp.user.exec.gemini(prompt);
+  return tp.user.exec.geminiCli(prompt);
 }
 
 module.exports = summarize;

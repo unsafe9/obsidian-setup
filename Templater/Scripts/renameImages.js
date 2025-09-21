@@ -1,16 +1,15 @@
 async function renameImages(tp, parser, useAI = false) {
-  const content = parser.content;
-
+  const file = parser.file;
   const imageLinkRegex = /!\[\[([^|\]]+?)]]/g;
   const pastedImageRegex = /Pasted image \d{14}\.(png|jpg|jpeg|gif|bmp|webp)/;
 
-  const matches = [...content.matchAll(imageLinkRegex)];
+  const matches = [...parser.content.matchAll(imageLinkRegex)];
   const imagesToRename = [];
 
   for (const match of matches) {
     const linkText = match[1]; // text in [[...]]
     if (pastedImageRegex.test(linkText)) {
-      const imageFile = tp.app.metadataCache.getFirstLinkpathDest(linkText, parser.file.path);
+      const imageFile = tp.app.metadataCache.getFirstLinkpathDest(linkText, file.path);
       if (imageFile) {
         imagesToRename.push({
           oldLinkText: linkText,
@@ -32,7 +31,7 @@ async function renameImages(tp, parser, useAI = false) {
       new Notice(`Renaming '${imageFile.path}'...`, 5000);
 
       // const prompt = `Generate a filename for the image '@${imageFile.path}'. Use 3-8 English words in lowercase with underscores. Your response must contain ONLY the filename itself without extension, with no explanation or other text.`;
-      // newName = await tp.user.exec.gemini(prompt);
+      // newName = await tp.user.exec.geminiCli(prompt);
 
       const prompt = `Use 3-8 English words in lowercase with underscores. Your response must contain ONLY the filename itself without extension, with no explanation or other text.`;
       newName = await tp.user.exec.ollama(tp, prompt, 'gemma3:12b', [imageFile.path]);

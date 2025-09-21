@@ -1,5 +1,5 @@
 <%*
-const file = tp.app.vault.getAbstractFileByPath(tp.file.path(true));
+const file = tp.file.find_tfile(tp.file.path(true));
 const result = await tp.user.relocateNewNote(tp, file);
 if (!result) {
     return;

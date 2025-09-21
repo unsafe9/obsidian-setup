@@ -1,6 +1,6 @@
 <%*
-const parser = await tp.user.parseFile(tp, file);
-const changed = await tp.user.syncH1Title(parser, file.basename);
+const parser = await tp.user.parseFile(tp);
+const changed = await tp.user.syncH1Title(parser);
 if (changed) {
   await parser.save();
 }

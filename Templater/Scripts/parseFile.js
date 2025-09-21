@@ -1,21 +1,21 @@
-/**
- * FileParser class for parsing and reassembling Obsidian files
- * Handles frontmatter, H1 title, and content separately
- */
 class FileParser {
   constructor(file) {
     this.file = file;
+    this.originalContent = '';
     this.frontmatter = {};
     this.title = '';
     this.content = '';
+    this.changed = false;
   }
 
   /**
    * Parse the file and extract all components
    */
   async parse() {
+    this.changed = false;
+
     let rawContent = await app.vault.read(this.file);
-    const originalContent = rawContent;
+    this.originalContent = rawContent;
 
     // 1. Check if frontmatter exists at the very beginning
     const frontmatterMatch = rawContent.match(/^---\s*[\s\S]*?\s*---\s*/);
@@ -70,57 +70,39 @@ class FileParser {
 
     // If no H1 title, use the file name
     if (!this.title) {
-      this.title = this.file.basename;
+      this.title = this.basename;
     }
 
     return this;
   }
 
-  /**
-   * Get frontmatter property value
-   */
   getFrontmatterProperty(key) {
     return this.frontmatter[key];
   }
 
-  /**
-   * Set frontmatter property value
-   */
   setFrontmatterProperty(key, value) {
     this.frontmatter[key] = value;
+    this.changed = true;
   }
 
-  /**
-   * Update H1 title text (without # symbol)
-   */
   setTitle(newTitle) {
     this.title = newTitle;
+    this.changed = true;
   }
 
-  /**
-   * Update content
-   */
   setContent(newContent) {
     this.content = newContent;
+    this.changed = true;
   }
 
-  /**
-   * Check if frontmatter exists
-   */
   hasFrontmatter() {
     return Object.keys(this.frontmatter).length > 0;
   }
 
-  /**
-   * Check if H1 title exists
-   */
   hasTitle() {
     return this.title.trim() !== '';
   }
 
-  /**
-   * Convert frontmatter object back to YAML text block
-   */
   _frontmatterObjToText() {
     if (!this.hasFrontmatter()) {
       return '';
@@ -140,9 +122,6 @@ class FileParser {
     return lines.join('\n');
   }
 
-  /**
-   * Reassemble all parts into complete file content
-   */
   reassemble(withFrontmatter = true) {
     let result = '';
 
@@ -177,15 +156,38 @@ class FileParser {
    * Save the reassembled content back to the file
    */
   async save() {
-    await app.vault.modify(this.file, this.reassemble());
+    if (!this.changed) {
+      return;
+    }
+    const content = this.reassemble();
+    if (content === this.originalContent) {
+      return;
+    }
+    await app.vault.modify(this.file, content);
   }
 }
 
 /**
  * Factory function to create and parse a FileParser instance
  */
-async function parseFile(tp, file) {
-  const parser = new FileParser(file);
+async function parseFile(tp, file = undefined) {
+  let parser;
+  if (file) {
+    if (file instanceof FileParser) {
+      parser = file;
+    } else if (file instanceof tp.obsidian.TFile) {
+      parser = new FileParser(file);
+    } else if (typeof file === 'string') {
+      parser = new FileParser(tp.file.find_tfile(file));
+    } else if (file.path) {
+      parser = new FileParser(tp.file.find_tfile(file.path));
+    }
+  } else {
+    parser = new FileParser(tp.file.find_tfile(tp.file.path(true)));
+  }
+  if (!parser) {
+    throw new Error('Invalid parameter');
+  }
   await parser.parse();
   return parser;
 }

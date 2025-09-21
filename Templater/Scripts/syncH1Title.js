@@ -1,4 +1,6 @@
-async function syncH1Title(parser, fileName) {
+async function syncH1Title(parser) {
+  const file = parser.file;
+  const fileName = file.basename;
   const currentTitle = parser.title;
 
   // Normalize titles for comparison (trim whitespace, handle empty strings)
@@ -25,11 +27,11 @@ async function syncH1Title(parser, fileName) {
       new Notice(`Created H1 title and synced with filename: ${normalizedFileName}`);
     }
 
-    return true; // Indicates changes were made
+    return true;
+
   } catch (error) {
     console.error(`Error syncing H1 title for ${fileName}:`, error);
     new Notice(`Error syncing H1 title: ${error.message}`, 5000);
-    return false;
   }
 }
 
