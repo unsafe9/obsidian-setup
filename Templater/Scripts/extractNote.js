@@ -26,7 +26,8 @@ async function extractNote(tp) {
   }
 
   // Inherit tags from the source note's frontmatter.
-  tags = tp.app.metadataCache.getFileCache(activeFile)?.frontmatter?.tags?.map(t => t.startsWith('#') ? t.slice(1) : t) || [];
+  const activeFile = tp.file.find_tfile(tp.file.path(true));
+  const tags = tp.app.metadataCache.getFileCache(activeFile)?.frontmatter?.tags?.map(t => t.startsWith('#') ? t.slice(1) : t) || [];
 
   // Generate the full content of new note
   const content = `---

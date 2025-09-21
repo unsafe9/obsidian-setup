@@ -38,6 +38,10 @@ async function renameImages(tp, parser, useAI = false) {
         prompt: prompt,
         model: 'gemma3:12b',
         images: [imageFile.path],
+        format: {
+          type: 'string',
+          description: 'The filename for the image.',
+        },
       });
       if (!newName || newName.trim() === '') {
         console.warn(`AI failed to provide a name for ${imageFile.path}`);
