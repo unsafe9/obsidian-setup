@@ -31,11 +31,11 @@ async function renameImages(tp, parser, useAI = false) {
     if (useAI) {
       new Notice(`Renaming '${imageFile.path}'...`, 5000);
 
-      const prompt = `Generate a filename for the image '@${imageFile.path}'.
-Use 3-8 English words with underscores.
-Your response must contain ONLY the filename itself without extension, with no explanation or other text.`;
+      // const prompt = `Generate a filename for the image '@${imageFile.path}'. Use 3-8 English words in lowercase with underscores. Your response must contain ONLY the filename itself without extension, with no explanation or other text.`;
+      // newName = await tp.user.exec.gemini(prompt);
 
-      newName = await tp.user.cli(`gemini -m gemini-2.5-flash -p "${prompt}"`);
+      const prompt = `Use 3-8 English words in lowercase with underscores. Your response must contain ONLY the filename itself without extension, with no explanation or other text.`;
+      newName = await tp.user.exec.ollama(tp, prompt, 'gemma3:12b', [imageFile.path]);
       if (!newName || newName.trim() === '') {
         console.warn(`AI failed to provide a name for ${imageFile.path}`);
         continue;

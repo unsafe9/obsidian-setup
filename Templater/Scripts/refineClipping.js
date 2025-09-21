@@ -18,7 +18,7 @@ Then, populate any empty frontmatter properties with details that can be inferre
 Use 'YYYY-MM-DDTHH:mm' format for 'published' and 'created' properties.
 Finally, replace 'description' property with a single-sentence summary of the content.`;
 
-  const result = await tp.user.cli(`gemini -m "${model}" --yolo -p "${prompt}"`);
+  const result = await tp.user.exec.gemini(prompt, true, model);
   console.log("Refine Clipping:", result);
 
   new Notice(`Cleanup ${file.path} complete.`, 5000);

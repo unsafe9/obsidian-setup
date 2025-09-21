@@ -39,4 +39,42 @@ async function cli(command) {
   }
 }
 
-module.exports = cli;
+async function gemini(prompt, yolo = false, model = 'gemini-2.5-flash') {
+  return cli(`gemini -m "${model}" ${yolo ? '--yolo' : ''} -p "${prompt}"`);
+}
+
+async function ollama(tp, prompt, model = 'gemma3:12b', images = undefined, format = undefined) {
+  let base64Images = undefined;
+  if (images?.length > 0) {
+    base64Images = await Promise.all(images.map(image => tp.user.file.imageToBase64(image)));
+  }
+
+  const response = await tp.obsidian.requestUrl({
+    url: 'http://localhost:11434/api/generate',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: model,
+      prompt: prompt,
+      stream: false,
+      images: base64Images,
+      format: format,
+    }),
+  });
+  const responseBody = response.json;
+  if (response.status !== 200 || !responseBody || !responseBody.done) {
+    console.error(`ollama error`, response);
+  } else {
+    console.log('ollama response:', response);
+  }
+
+  return responseBody.response?.trim();
+}
+
+module.exports = {
+  cli,
+  gemini,
+  ollama,
+};

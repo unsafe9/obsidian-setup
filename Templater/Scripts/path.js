@@ -79,6 +79,7 @@ module.exports = {
   inDir,
   isNotePath,
   getNotePaths,
+  getClippingPaths,
   join,
   directorySuggester,
 };

@@ -143,14 +143,16 @@ class FileParser {
   /**
    * Reassemble all parts into complete file content
    */
-  reassemble() {
+  reassemble(withFrontmatter = true) {
     let result = '';
 
     // Add frontmatter if exists
-    const frontmatterBlock = this._frontmatterObjToText();
-    if (frontmatterBlock) {
-      result += frontmatterBlock;
-      result += '\n\n'; // Two newlines after frontmatter
+    if (withFrontmatter) {
+      const frontmatterBlock = this._frontmatterObjToText();
+      if (frontmatterBlock) {
+        result += frontmatterBlock;
+        result += '\n\n'; // Two newlines after frontmatter
+      }
     }
 
     // Add H1 title if exists

@@ -1,8 +1,10 @@
 <%*
 const file = tp.app.vault.getAbstractFileByPath(tp.file.path(true));
+const parser = await tp.user.parseFile(tp, file);
+const content = parser.reassemble(false);
 
 // Get suggested tags from the AI
-const suggestedTags = await tp.user.suggestTags(tp, file, false);
+const suggestedTags = await tp.user.suggestTags(tp, content, false);
 if (!suggestedTags?.length) {
   return;
 }

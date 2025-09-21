@@ -1,17 +1,24 @@
-async function suggestTags(tp, file, useMetadataExtractor = true) {
-  new Notice(`Analyzing tags for '${file.path}'...`, 5000);
+async function suggestTags(tp, content, suggestNewTags = true) {
+  new Notice(`Analyzing tags...`, 5000);
 
-  const prompt = `Analyze the content of @${file.path} and suggest appropriate tags based on the content.
-${useMetadataExtractor ? `Look at existing tags in @.obsidian/plugins/metadata-extractor/tags.json for reference.` : ''}
-Return only the tag names (without # symbols, without spaces) separated by commas.
-Example format: technology,programming,javascript,web-development
-Do not include any other text or explanation, just the comma-separated tag list.`;
+  const tags = Object.keys(app.metadataCache.getTags()).map(tag => tag.slice(1));
 
-  const res = await tp.user.cli(`gemini -m gemini-2.5-flash -p "${prompt}"`);
-  console.log('Tag File raw response:', res);
+  const prompt = `Suggest a few tags that are really appropriate for the following content.
+Use existing tags ${suggestNewTags ? 'as much as possible, and add new tags when there are really no applicable options.' : 'only.'}
+Existing tags: ${tags.join(',')}
+Content: ${content}`;
 
-  // Parse the response into an array of tags
-  return res.trim().split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+  const res = await tp.user.exec.ollama(tp, prompt, 'gemma3:12b', undefined, {
+    type: 'array',
+    description: 'The suggested tags.',
+    items: {
+      type: 'string',
+      enum: !suggestNewTags ? tags : undefined,
+    },
+  });
+  console.log('suggestTags raw response:', res);
+
+  return JSON.parse(res);
 }
 
 module.exports = suggestTags;
