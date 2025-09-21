@@ -17,7 +17,7 @@ async function relocateNewNote(tp, file, inheritTags = true) {
   if (sourceFile) {
     // Created via a wiki link
     const targetFolder = sourceFile.parent;
-    const targetPath = tp.user.path.join(targetFolder.path, title);
+    const targetPath = app.vault.adapter.path.join(targetFolder.path, title);
 
     if (file.path !== targetPath) {
       await tp.file.move(targetPath);
@@ -30,7 +30,7 @@ async function relocateNewNote(tp, file, inheritTags = true) {
     }
 
   } else if (title.startsWith("Untitled")) {
-    const chosenPath = await tp.user.path.directorySuggester(tp, "Select destination folder...", true);
+    const chosenPath = await tp.user.file.directorySuggester(tp, "Select destination folder...", true);
     if (!chosenPath) {
       await tp.app.vault.trash(file, true);
       return;
@@ -50,7 +50,7 @@ async function relocateNewNote(tp, file, inheritTags = true) {
       tags = match ? match[2].split('#').map(tag => tag.trim()).filter(tag => tag.length > 0) : [];
 
       try {
-        await tp.file.move(tp.user.path.join(chosenPath, title));
+        await tp.file.move(app.vault.adapter.path.join(chosenPath, title));
       } catch (e) {
         new Notice(e, 5000);
         continue

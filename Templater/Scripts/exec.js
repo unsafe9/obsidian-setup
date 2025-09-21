@@ -39,14 +39,118 @@ async function cli(command) {
   }
 }
 
-async function geminiCli(prompt, yolo = false, model = 'gemini-2.5-flash') {
-  return cli(`gemini -m "${model}" ${yolo ? '--yolo' : ''} -p "${prompt}"`);
+// interface AgentPrompt {
+//   prompt: string;
+//   yolo: boolean;
+//   model: string;
+// }
+
+// interface ApiPrompt {
+//   prompt: string;
+//   model: string;
+//   images?: string[];
+//   format?: Object;
+//   thinking: boolean;
+// }
+
+async function geminiCli(p) {
+  if (!p.model) {
+    p.model = 'gemini-2.5-flash';
+  }
+
+  return cli(`gemini -m "${p.model}" ${p.yolo ? '--yolo' : ''} -p "${p.prompt}"`);
 }
 
-async function ollama(tp, prompt, model = 'gemma3:12b', images = undefined, format = undefined) {
-  let base64Images = undefined;
-  if (images?.length > 0) {
-    base64Images = await Promise.all(images.map(image => tp.user.file.imageToBase64(image)));
+async function gemini(tp, p) {
+  if (!p.model) {
+    p.model = 'gemini-2.5-flash-lite';
+  }
+
+  const body = {
+    contents: [
+      {
+        parts: [
+          {
+            text: p.prompt
+          },
+        ]
+      }
+    ]
+  };
+
+  if (p.images?.length > 0) {
+    const base64Images = await Promise.all(p.images.map(image => tp.user.file.imageToBase64(image)));
+    for (const image of base64Images) {
+      body.contents[0].parts.push({
+        inline_data: {
+          mime_type: 'image/png',
+          data: image,
+        },
+      });
+    }
+  }
+
+  if (!p.thinking) {
+    body.generationConfig = {
+      ...body.generationConfig,
+      thinkingConfig: {
+        thinkingBudget: 0
+      }
+    };
+  }
+
+  if (p.format) {
+    body.generationConfig = {
+      ...body.generationConfig,
+      responseMimeType: 'application/json',
+      responseSchema: p.format,
+    };
+  }
+
+  const config = await tp.user.config.getConfig();
+  const apiKey = config.ai.gemini_api_key;
+
+  const response = await tp.obsidian.requestUrl({
+    url: `https://generativelanguage.googleapis.com/v1beta/models/${p.model}:generateContent`,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-goog-api-key': apiKey,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const responseBody = response.json;
+  if (response.status !== 200 || !responseBody) {
+    throw new Error(`gemini error`, response);
+  }
+
+  console.log('gemini response:', response);
+
+  const content = responseBody.candidates[0].content.parts[0].text;
+  if (p.format) {
+    return JSON.parse(content);
+  }
+  return content;
+}
+
+async function ollama(tp, p) {
+  if (!p.model) {
+    p.model = 'gemma3:12b';
+  }
+
+  const body = {
+    model: p.model,
+    prompt: p.prompt,
+    stream: false,
+  };
+
+  if (p.images?.length > 0) {
+    body.images = await Promise.all(p.images.map(image => tp.user.file.imageToBase64(image)));
+  }
+
+  if (p.format) {
+    body.format = p.format;
   }
 
   const response = await tp.obsidian.requestUrl({
@@ -55,26 +159,25 @@ async function ollama(tp, prompt, model = 'gemma3:12b', images = undefined, form
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model: model,
-      prompt: prompt,
-      stream: false,
-      images: base64Images,
-      format: format,
-    }),
+    body: JSON.stringify(body),
   });
+
   const responseBody = response.json;
   if (response.status !== 200 || !responseBody || !responseBody.done) {
-    console.error(`ollama error`, response);
-  } else {
-    console.log('ollama response:', response);
+    throw new Error(`ollama error`, response);
   }
 
+  console.log('ollama response:', response);
+
+  if (p.format) {
+    return JSON.parse(responseBody.response);
+  }
   return responseBody.response?.trim();
 }
 
 module.exports = {
   cli,
   geminiCli,
+  gemini,
   ollama,
 };

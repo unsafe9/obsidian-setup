@@ -4,7 +4,8 @@ const debounceDelay = 500;
 const templateApplyDelay = 300;
 
 tp.app.vault.on('create', async file => {
-  if (tp.user.path.inDir(file.path, tp.user.path.getClippingPaths())) {
+  const clippingPaths = await tp.user.config.getClippingPaths();
+  if (tp.user.file.inDir(file.path, clippingPaths)) {
     await process(file, async parser => {
       await tp.user.refineClipping(tp, parser);
     });
@@ -12,7 +13,8 @@ tp.app.vault.on('create', async file => {
 });
 
 tp.app.vault.on('modify', async file => {
-  if (tp.user.path.isNotePath(file.path)) {
+  const notePaths = await tp.user.config.getNotePaths();
+  if (tp.user.file.inDir(file.path, notePaths)) {
     await process(file, async parser => {
       await tp.user.syncH1Title(parser);
 
@@ -23,7 +25,8 @@ tp.app.vault.on('modify', async file => {
 });
 
 tp.app.vault.on('rename', async (file, oldPath) => {
-  if (tp.user.path.isNotePath(file.path)) {
+  const notePaths = await tp.user.config.getNotePaths();
+  if (tp.user.file.inDir(file.path, notePaths)) {
     await process(file, async parser => {
       await sleep(templateApplyDelay);
       await tp.user.syncH1Title(parser);

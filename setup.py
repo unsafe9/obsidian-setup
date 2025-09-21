@@ -17,7 +17,8 @@ Usage:
 """
 
 import json
-import re
+import os
+import string
 import sys
 import shutil
 from pathlib import Path
@@ -29,11 +30,12 @@ class ObsidianSetup:
         self.source_path = Path(source_path) if source_path else Path.cwd()
         self.obsidian_path = self.vault_path / ".obsidian"
         self.plugins_path = self.obsidian_path / "plugins"
-        self.templater_data_path = self.plugins_path / "templater-obsidian" / "data.json"
+        self.templater_data_path = (
+            self.plugins_path / "templater-obsidian" / "data.json"
+        )
         self.config_path = self.vault_path / "config.json"
         self.source_config_path = self.source_path / "config.json"
         self.config = None
-        self.backup_dir = None  # Will be set after config is loaded
 
     def load_config(self):
         """Load configuration from config.json"""
@@ -43,14 +45,8 @@ class ObsidianSetup:
             sys.exit(1)
 
         try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-
-            # Set backup directory from config
-            backup_dir_name = config.get("setup", {}).get("backup_directory", ".obsidian-setup-backup")
-            self.backup_dir = self.vault_path / backup_dir_name
-
-            return config
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
         except Exception as e:
             print(f"❌ Error loading configuration: {e}")
             sys.exit(1)
@@ -85,7 +81,6 @@ class ObsidianSetup:
         print("✅ All required plugins are installed.")
         return True
 
-
     def get_command_templates(self):
         """Find template files specifically in the Commands folder for hotkey registration"""
         commands_folder = self.config["paths"]["commands_folder"]
@@ -102,23 +97,87 @@ class ObsidianSetup:
 
         return sorted(command_files)
 
+    def _load_source_config(self):
+        """Load configuration from source config.json file"""
+        try:
+            with open(self.source_config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+
+    def _get_config_value(self, path, default=None):
+        """Get configuration value, trying loaded config first, then source config"""
+        keys = path.split('.')
+
+        # Try loaded config first
+        if self.config:
+            value = self.config
+            for key in keys:
+                if isinstance(value, dict) and key in value:
+                    value = value[key]
+                else:
+                    value = None
+                    break
+            if value is not None:
+                return value
+
+        # Fallback to source config
+        source_config = self._load_source_config()
+        value = source_config
+        for key in keys:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            else:
+                return default
+        return value
+
+    def _get_backup_dir(self):
+        """Get backup directory path"""
+        backup_dir_name = self._get_config_value(
+            "setup.backup_directory", ".obsidian-setup-backup")
+        backup_dir = self.vault_path / backup_dir_name
+        backup_dir.mkdir(exist_ok=True)
+        return backup_dir
+
+    def _should_backup(self):
+        """Check if backup is enabled in configuration"""
+        return self._get_config_value("setup.backup_existing_config", False)
+
+    def copy_file(self, source_path, target_path, backup_name=None):
+        """Copy a file from source to target"""
+        source = Path(str(source_path))
+        target = Path(str(target_path))
+
+        if not source.exists():
+            return False
+
+        # Create backup if requested
+        if backup_name and target.exists():
+            self.create_backup(target, backup_name)
+
+        try:
+            with open(source, "r", encoding="utf-8") as f:
+                text = f.read()
+            text = string.Template(text).substitute(os.environ)
+            with open(target, "w", encoding="utf-8") as f:
+                f.write(text)
+
+            return True
+        except Exception as e:
+            print(f"❌ Error copying {source} to {target}: {e}")
+            return False
+
     def create_backup(self, source_path, backup_name):
         """Create a backup of a file or directory in the backup directory"""
-        # Ensure config is loaded
-        if not self.config:
-            self.config = self.load_config()
-
-        if not self.config.get("setup", {}).get("backup_existing_config", False):
+        if not self._should_backup():
             return False
 
         source = Path(source_path)
         if not source.exists():
             return False
 
-        # Create backup directory if it doesn't exist
-        self.backup_dir.mkdir(exist_ok=True)
-
-        backup_path = self.backup_dir / backup_name
+        backup_dir = self._get_backup_dir()
+        backup_path = backup_dir / backup_name
 
         try:
             if source.is_file():
@@ -145,44 +204,50 @@ class ObsidianSetup:
 
         source_templater_path = self.source_path / "Templater"
         if not source_templater_path.exists():
-            print(f"❌ Source Templater folder not found: {source_templater_path}")
+            print(
+                f"❌ Source Templater folder not found: {source_templater_path}")
             return False
 
-        # Load config to check overwrite setting
-        if not self.config:
-            # Load config from source first to get settings
-            try:
-                with open(self.source_config_path, 'r', encoding='utf-8') as f:
-                    temp_config = json.load(f)
-                overwrite_files = temp_config.get("setup", {}).get("overwrite_existing_files", True)
-            except:
-                overwrite_files = True  # Default to overwrite if can't read config
-        else:
-            overwrite_files = self.config.get("setup", {}).get("overwrite_existing_files", True)
+        # Get overwrite setting from config
+        overwrite_files = self._get_config_value(
+            "setup.overwrite_existing_files", True)
 
         try:
             # Handle config.json
             if self.config_path.exists():
                 if overwrite_files:
-                    self.create_backup(self.config_path, "config.json")
-                    shutil.copy2(self.source_config_path, self.config_path)
+                    if self.copy_file(
+                        self.source_config_path, self.config_path, "config.json"
+                    ):
+                        print(f"✅ Copied config.json to: {self.config_path}")
+                    else:
+                        print(f"❌ Failed to copy config.json")
+                        return False
+                else:
+                    print(
+                        f"⚠️ Skipped config.json (already exists): {self.config_path}")
+            else:
+                if self.copy_file(self.source_config_path, self.config_path):
                     print(f"✅ Copied config.json to: {self.config_path}")
                 else:
-                    print(f"⚠️ Skipped config.json (already exists): {self.config_path}")
-            else:
-                shutil.copy2(self.source_config_path, self.config_path)
-                print(f"✅ Copied config.json to: {self.config_path}")
+                    print(f"❌ Failed to copy config.json")
+                    return False
 
             # Handle Templater folder
             target_templater_path = self.vault_path / "Templater"
             if target_templater_path.exists():
                 if overwrite_files:
                     self.create_backup(target_templater_path, "Templater")
-                    shutil.rmtree(target_templater_path)  # Remove existing folder
-                    shutil.copytree(source_templater_path, target_templater_path)
-                    print(f"✅ Copied Templater folder to: {target_templater_path}")
+                    # Remove existing folder
+                    shutil.rmtree(target_templater_path)
+                    shutil.copytree(source_templater_path,
+                                    target_templater_path)
+                    print(
+                        f"✅ Copied Templater folder to: {target_templater_path}")
                 else:
-                    print(f"⚠️ Skipped Templater folder (already exists): {target_templater_path}")
+                    print(
+                        f"⚠️ Skipped Templater folder (already exists): {target_templater_path}"
+                    )
             else:
                 shutil.copytree(source_templater_path, target_templater_path)
                 print(f"✅ Copied Templater folder to: {target_templater_path}")
@@ -198,16 +263,22 @@ class ObsidianSetup:
                     target_css_file = target_snippets_path / css_file.name
                     if target_css_file.exists():
                         if overwrite_files:
-                            self.create_backup(target_css_file, f"snippets_{css_file.name}")
+                            self.create_backup(
+                                target_css_file, f"snippets_{css_file.name}"
+                            )
                             shutil.copy2(css_file, target_css_file)
                             print(f"✅ Copied CSS snippet: {css_file.name}")
                         else:
-                            print(f"⚠️ Skipped CSS snippet (already exists): {css_file.name}")
+                            print(
+                                f"⚠️ Skipped CSS snippet (already exists): {css_file.name}"
+                            )
                     else:
                         shutil.copy2(css_file, target_css_file)
                         print(f"✅ Copied CSS snippet: {css_file.name}")
             else:
-                print(f"⚠️ Source CssSnippets folder not found: {source_css_snippets_path}")
+                print(
+                    f"⚠️ Source CssSnippets folder not found: {source_css_snippets_path}"
+                )
 
             return True
 
@@ -215,72 +286,20 @@ class ObsidianSetup:
             print(f"❌ Error copying files: {e}")
             return False
 
-    def update_path_config(self):
-        """Update path.js configuration with values from config.json"""
-        path_js_path = self.vault_path / self.config["paths"]["user_scripts_folder"] / "path.js"
-
-        if not path_js_path.exists():
-            print(f"⚠️ path.js not found at: {path_js_path}")
-            return False
-
-        try:
-            # Read the current path.js file
-            with open(path_js_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-            # Update note paths and clipping paths
-            note_paths = self.config["paths"]["note_directories"]
-            clipping_paths = self.config["paths"]["clipping_directories"]
-
-            # Replace the arrays in the JavaScript file
-            note_paths_str = str(note_paths).replace("'", "'")
-            clipping_paths_str = str(clipping_paths).replace("'", "'")
-
-            # Find and replace the arrays
-            content = re.sub(
-                r'const notePaths = \[.*?\];',
-                f"const notePaths = {note_paths_str};",
-                content,
-                flags=re.DOTALL
-            )
-            content = re.sub(
-                r'const clippingPaths = \[.*?\];',
-                f"const clippingPaths = {clipping_paths_str};",
-                content,
-                flags=re.DOTALL
-            )
-
-            # Write the updated content back
-            with open(path_js_path, 'w', encoding='utf-8') as f:
-                f.write(content)
-
-            print("✅ Updated path.js with configuration values")
-            return True
-
-        except Exception as e:
-            print(f"❌ Error updating path.js: {e}")
-            return False
-
     def create_folder_templates(self):
         """Create folder templates configuration based on note directories"""
-        folder_templates = []
-
-        # Get note directories and daily note directories
         note_dirs = self.config["paths"]["note_directories"]
         daily_dirs = self.config["paths"]["daily_note_directories"]
-
         new_note_template = self.config["paths"]["new_note_template"]
         daily_note_template = self.config["paths"]["daily_note_template"]
 
-        # Add folder templates for each note directory
-        for note_dir in note_dirs:
-            template = daily_note_template if note_dir in daily_dirs else new_note_template
-            folder_templates.append({
+        return [
+            {
                 "folder": note_dir,
-                "template": template
-            })
-
-        return folder_templates
+                "template": daily_note_template if note_dir in daily_dirs else new_note_template
+            }
+            for note_dir in note_dirs
+        ]
 
     def setup_templater_config(self):
         """Configure Templater plugin settings"""
@@ -291,14 +310,18 @@ class ObsidianSetup:
         config_exists = self.templater_data_path.exists()
 
         if not config_exists:
-            print(f"📝 Templater configuration file not found. Creating new one: {self.templater_data_path}")
+            print(
+                f"📝 Templater configuration file not found. Creating new one: {self.templater_data_path}"
+            )
         else:
-            print(f"📝 Found existing Templater configuration: {self.templater_data_path}")
+            print(
+                f"📝 Found existing Templater configuration: {self.templater_data_path}"
+            )
 
         try:
             # Read existing configuration if it exists
             if config_exists:
-                with open(self.templater_data_path, 'r', encoding='utf-8') as f:
+                with open(self.templater_data_path, "r", encoding="utf-8") as f:
                     existing_config = json.load(f)
 
                 # Create backup using unified backup system
@@ -329,17 +352,27 @@ class ObsidianSetup:
             existing_config.update(templater_config)
 
             # Save updated configuration
-            with open(self.templater_data_path, 'w', encoding='utf-8') as f:
+            with open(self.templater_data_path, "w", encoding="utf-8") as f:
                 json.dump(existing_config, f, indent=2, ensure_ascii=False)
 
             action = "created" if not config_exists else "updated"
             print(f"✅ Templater configuration {action} successfully:")
-            print(f"   - Templates folder: {existing_config['templates_folder']}")
-            print(f"   - User scripts folder: {existing_config['user_scripts_folder']}")
-            print(f"   - Folder templates: {len(existing_config['folder_templates'])} folders")
-            print(f"   - Enabled template hotkeys: {len(existing_config['enabled_templates_hotkeys'])} templates")
-            print(f"   - Startup templates: {len(existing_config['startup_templates'])} template(s)")
-            print(f"   - File creation trigger: {'Enabled' if existing_config['trigger_on_file_creation'] else 'Disabled'}")
+            print(
+                f"   - Templates folder: {existing_config['templates_folder']}")
+            print(
+                f"   - User scripts folder: {existing_config['user_scripts_folder']}")
+            print(
+                f"   - Folder templates: {len(existing_config['folder_templates'])} folders"
+            )
+            print(
+                f"   - Enabled template hotkeys: {len(existing_config['enabled_templates_hotkeys'])} templates"
+            )
+            print(
+                f"   - Startup templates: {len(existing_config['startup_templates'])} template(s)"
+            )
+            print(
+                f"   - File creation trigger: {'Enabled' if existing_config['trigger_on_file_creation'] else 'Disabled'}"
+            )
 
             return True
 
@@ -350,8 +383,12 @@ class ObsidianSetup:
     def run_setup(self, copy_files=False, configure_only=False):
         """Run the setup process based on options"""
         # Determine what operations to perform
-        do_copy = copy_files or (not copy_files and not configure_only)  # Copy if --copy or default
-        do_configure = configure_only or (not copy_files and not configure_only)  # Configure if --configure or default
+        do_copy = copy_files or (
+            not copy_files and not configure_only
+        )  # Copy if --copy or default
+        do_configure = configure_only or (
+            not copy_files and not configure_only
+        )  # Configure if --configure or default
 
         print("🔧 Starting Obsidian Setup...")
         print(f"📁 Vault path: {self.vault_path}")
@@ -384,12 +421,6 @@ class ObsidianSetup:
             print()
             step += 1
 
-            # Update path configuration
-            print(f"{step}️⃣ Updating path configuration...")
-            self.update_path_config()
-            print()
-            step += 1
-
             # Configure Templater
             print(f"{step}️⃣ Configuring Templater plugin...")
             if not self.setup_templater_config():
@@ -416,32 +447,35 @@ Examples:
   python setup.py --copy /path/to/vault    # Copy files only
   python setup.py --configure /path/to/vault  # Configure plugins only
   python setup.py --vault /path/to/vault   # Copy files and configure (explicit vault)
-        """
+        """,
     )
 
     parser.add_argument(
-        'vault_path',
-        nargs='?',
+        "vault_path",
+        nargs="?",
         default=None,
-        help='Path to the Obsidian vault directory (default: current directory)'
+        help="Path to the Obsidian vault directory (default: current directory)",
     )
 
     parser.add_argument(
-        '--vault', '-v',
-        dest='vault_path_flag',
-        help='Path to the Obsidian vault directory (alternative to positional argument)'
+        "--vault",
+        "-v",
+        dest="vault_path_flag",
+        help="Path to the Obsidian vault directory (alternative to positional argument)",
     )
 
     parser.add_argument(
-        '--copy', '-c',
-        action='store_true',
-        help='Copy config.json and Templater folder to the target vault'
+        "--copy",
+        "-c",
+        action="store_true",
+        help="Copy config.json and Templater folder to the target vault",
     )
 
     parser.add_argument(
-        '--configure', '-C',
-        action='store_true',
-        help='Configure plugins settings only (requires existing config.json in target vault)'
+        "--configure",
+        "-C",
+        action="store_true",
+        help="Configure plugins settings only (requires existing config.json in target vault)",
     )
 
     args = parser.parse_args()
@@ -460,14 +494,20 @@ Examples:
 
     # Validate options
     if args.copy and args.configure:
-        print("❌ Cannot use --copy and --configure together. Use one or neither (for both).")
+        print(
+            "❌ Cannot use --copy and --configure together. Use one or neither (for both)."
+        )
         sys.exit(1)
 
     # Determine source path (current directory by default)
     source_path = Path.cwd()
 
     # If copying to a different vault, ensure we have source files
-    if (args.copy or (not args.copy and not args.configure)) and vault_path and vault_path != source_path:
+    if (
+        (args.copy or (not args.copy and not args.configure))
+        and vault_path
+        and vault_path != source_path
+    ):
         if not (source_path / "config.json").exists():
             print(f"❌ Source config.json not found in: {source_path}")
             sys.exit(1)
@@ -478,7 +518,8 @@ Examples:
     setup = ObsidianSetup(vault_path, source_path)
 
     try:
-        success = setup.run_setup(copy_files=args.copy, configure_only=args.configure)
+        success = setup.run_setup(
+            copy_files=args.copy, configure_only=args.configure)
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
         print("\n⚠️ Setup interrupted by user.")

@@ -24,7 +24,7 @@ class FileParser {
     if (frontmatterMatch) {
       // Verify frontmatter is at the very beginning (no content before it)
       const beforeFrontmatter = rawContent.substring(0, frontmatterMatch.index);
-      if (beforeFrontmatter.trim() === '') {
+      if (beforeFrontmatter?.trim()) {
         hasFrontmatter = true;
         rawContent = rawContent.substring(frontmatterMatch[0].length);
       }
@@ -100,7 +100,7 @@ class FileParser {
   }
 
   hasTitle() {
-    return this.title.trim() !== '';
+    return this.title?.trim();
   }
 
   _frontmatterObjToText() {
@@ -171,23 +171,17 @@ class FileParser {
  * Factory function to create and parse a FileParser instance
  */
 async function parseFile(tp, file = undefined) {
-  let parser;
-  if (file) {
-    if (file instanceof FileParser) {
-      parser = file;
-    } else if (file instanceof tp.obsidian.TFile) {
-      parser = new FileParser(file);
-    } else if (typeof file === 'string') {
-      parser = new FileParser(tp.file.find_tfile(file));
-    } else if (file.path) {
-      parser = new FileParser(tp.file.find_tfile(file.path));
-    }
-  } else {
-    parser = new FileParser(tp.file.find_tfile(tp.file.path(true)));
+  if (!file) {
+    file = tp.file.find_tfile(tp.file.path(true));
+  } else if (typeof file === 'string') {
+    file = tp.file.find_tfile(file);
+  } else if (file.path) {
+    file = tp.file.find_tfile(file.path);
   }
-  if (!parser) {
+  if (!file) {
     throw new Error('Invalid parameter');
   }
+  const parser = new FileParser(file);
   await parser.parse();
   return parser;
 }

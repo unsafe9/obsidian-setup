@@ -31,10 +31,14 @@ async function renameImages(tp, parser, useAI = false) {
       new Notice(`Renaming '${imageFile.path}'...`, 5000);
 
       // const prompt = `Generate a filename for the image '@${imageFile.path}'. Use 3-8 English words in lowercase with underscores. Your response must contain ONLY the filename itself without extension, with no explanation or other text.`;
-      // newName = await tp.user.exec.geminiCli(prompt);
+      // newName = await tp.user.exec.geminiCli({ prompt });
 
-      const prompt = `Use 3-8 English words in lowercase with underscores. Your response must contain ONLY the filename itself without extension, with no explanation or other text.`;
-      newName = await tp.user.exec.ollama(tp, prompt, 'gemma3:12b', [imageFile.path]);
+      const prompt = `Generate a filename for the image using 3-8 English words in lowercase with underscores.`;
+      newName = await tp.user.exec.ollama(tp, {
+        prompt: prompt,
+        model: 'gemma3:12b',
+        images: [imageFile.path],
+      });
       if (!newName || newName.trim() === '') {
         console.warn(`AI failed to provide a name for ${imageFile.path}`);
         continue;

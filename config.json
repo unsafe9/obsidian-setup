@@ -1,30 +1,32 @@
 {
-    "required_plugins": [
-        "templater-obsidian",
-        "metadata-extractor"
+  "required_plugins": [
+    "templater-obsidian"
+  ],
+  "paths": {
+    "note_directories": [
+      "Notes",
+      "Archives",
+      "Daily Notes"
     ],
-    "paths": {
-        "note_directories": [
-            "Notes",
-            "Archives",
-            "Daily Notes"
-        ],
-        "clipping_directories": [
-            "Clippings"
-        ],
-        "daily_note_directories": [
-            "Daily Notes"
-        ],
-        "templates_folder": "Templater",
-        "user_scripts_folder": "Templater/Scripts",
-        "commands_folder": "Templater/Commands",
-        "new_note_template": "Templater/New Note.md",
-        "startup_template": "Templater/Startup Scripts.md",
-        "daily_note_template": "Templater/Daily Note.md"
-    },
-    "setup": {
-        "backup_existing_config": false,
-        "backup_directory": ".obsidian-setup-backup",
-        "overwrite_existing_files": true
-    }
+    "clipping_directories": [
+      "Clippings"
+    ],
+    "daily_note_directories": [
+      "Daily Notes"
+    ],
+    "templates_folder": "Templater",
+    "user_scripts_folder": "Templater/Scripts",
+    "commands_folder": "Templater/Commands",
+    "new_note_template": "Templater/New Note.md",
+    "startup_template": "Templater/Startup Scripts.md",
+    "daily_note_template": "Templater/Daily Note.md"
+  },
+  "setup": {
+    "backup_existing_config": false,
+    "backup_directory": ".obsidian-setup-backup",
+    "overwrite_existing_files": true
+  },
+  "ai": {
+    "gemini_api_key": "${GEMINI_API_KEY}"
+  }
 }

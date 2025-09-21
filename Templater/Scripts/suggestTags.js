@@ -8,17 +8,20 @@ Use existing tags ${suggestNewTags ? 'as much as possible, and add new tags when
 Existing tags: ${tags.join(',')}
 Content: ${content}`;
 
-  const res = await tp.user.exec.ollama(tp, prompt, 'gemma3:12b', undefined, {
-    type: 'array',
-    description: 'The suggested tags.',
-    items: {
-      type: 'string',
-      enum: !suggestNewTags ? tags : undefined,
+  const res = await tp.user.exec.gemini(tp, {
+    prompt: prompt,
+    format: {
+      type: 'array',
+      description: 'The suggested tags.',
+      items: {
+        type: 'string',
+        enum: !suggestNewTags ? tags : undefined,
+      },
     },
   });
   console.log('suggestTags raw response:', res);
 
-  return JSON.parse(res);
+  return res;
 }
 
 module.exports = suggestTags;

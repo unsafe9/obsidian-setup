@@ -20,7 +20,7 @@ async function extractNote(tp) {
   }
 
   // Prompt for the destination folder
-  const chosenPath = await tp.user.path.directorySuggester(tp, "Select destination folder...", false);
+  const chosenPath = await tp.user.file.directorySuggester(tp, "Select destination folder...", false);
   if (!chosenPath) {
     return;
   }

@@ -1,21 +1,31 @@
-async function refineClipping(tp, parser, threshold = 15000) {
+async function refineClipping(tp, parser, threshold = 30000) {
   const file = parser.file;
   const content = parser.content;
   const charCount = content.length;
   const model = charCount > threshold ? "gemini-2.5-pro" : "gemini-2.5-flash";
   new Notice(`Cleaning up ${file.path} with ${model}...`, 5000);
 
-  const prompt = `Modify the web-clipped file @${file.path}.
-Clean up the content by removing all irrelevant information such as ads, boilerplate text, personal opinions, and unnecessary introductions, refining it to the core message.
-However, preserve any important links, meaningful asides, related examples, or contextual background that adds value, even if it deviates slightly from the main topic.
-Distinguish between valuable tangents and irrelevant filler.
-Format the final output in clean, readable Markdown, using headings, lists, and more where appropriate. Fix broken tables and code blocks.
-Keep the H1 title two lines below the frontmatter.
-Then, populate any empty frontmatter properties with details that can be inferred from the text.
-Use 'YYYY-MM-DDTHH:mm' format for 'published' and 'created' properties.
-Finally, replace 'description' property with a single-sentence summary of the content.`;
+  const prompt = `Process the web-clipped file (@${file.path}) according to the instructions below to refine and structure its content.
 
-  const result = await tp.user.exec.geminiCli(prompt, true, model);
+1. Core Content Extraction
+   - Eliminate all non-essential elements, including advertisements, navigation menus, footers, and subjective opinions.
+   - Carefully retain any information that provides value and context, such as important hyperlinks, illustrative examples, and relevant background details.
+
+2. Markdown Formatting and Structure
+   - Reformat the extracted content into a clean and logical Markdown document. Use structural elements like headers, lists, and blockquotes to improve readability.
+   - Ensure all tables and code blocks are correctly formatted and rendered properly.
+   - The main H1 title must be placed exactly two lines below the frontmatter section.
+
+3. Metadata and Final Review
+   - Analyze the article's content to infer and populate any empty frontmatter fields.
+   - Standardize the 'published' and 'created' properties to the 'YYYY-MM-DDTHH:mm' format.
+   - Compose a concise, single-sentence summary of the article for the 'description' field.`;
+
+  const result = await tp.user.exec.geminiCli({
+    prompt: prompt,
+    model: model,
+    yolo: true,
+  });
   console.log("Refine Clipping:", result);
 
   new Notice(`Cleanup ${file.path} complete.`, 5000);
