@@ -21,11 +21,6 @@
     "startup_template": "Templater/Startup Scripts.md",
     "daily_note_template": "Templater/Daily Note.md"
   },
-  "setup": {
-    "backup_existing_config": false,
-    "backup_directory": ".obsidian-setup-backup",
-    "overwrite_existing_files": true
-  },
   "ai": {
     "gemini_api_key": "${GEMINI_API_KEY}"
   }

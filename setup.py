@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 class ObsidianSetup:
-    def __init__(self, vault_path=None, source_path=None):
+    def __init__(self, vault_path=None, source_path=None, backup_existing_config=True, backup_directory=".obsidian-setup-backup", overwrite_existing_files=True):
         self.vault_path = Path(vault_path) if vault_path else Path.cwd()
         self.source_path = Path(source_path) if source_path else Path.cwd()
         self.obsidian_path = self.vault_path / ".obsidian"
@@ -18,6 +18,9 @@ class ObsidianSetup:
         self.config_path = self.vault_path / "config.json"
         self.source_config_path = self.source_path / "config.json"
         self.config = None
+        self.backup_existing_config = backup_existing_config
+        self.backup_directory = self.vault_path / backup_directory
+        self.overwrite_existing_files = overwrite_existing_files
 
     def load_config(self):
         """Load configuration from config.json"""
@@ -113,54 +116,72 @@ class ObsidianSetup:
                 return default
         return value
 
-    def _get_backup_dir(self):
-        """Get backup directory path"""
-        backup_dir_name = self._get_config_value("setup.backup_directory", ".obsidian-setup-backup")
-        backup_dir = self.vault_path / backup_dir_name
-        backup_dir.mkdir(exist_ok=True)
-        return backup_dir
-
-    def _should_backup(self):
-        """Check if backup is enabled in configuration"""
-        return self._get_config_value("setup.backup_existing_config", False)
-
-    def copy_file(self, source_path, target_path, backup_name=None):
-        """Copy a file from source to target"""
+    def copy_file(self, source_path, target_path, backup_relative_path=None, templating=False, relative_path=None):
+        """Copy a file from source to target with automatic backup, overwrite handling, and logging"""
         source = Path(str(source_path))
         target = Path(str(target_path))
+        display_path = relative_path if relative_path else target.name
 
         if not source.exists():
+            print(f"❌ Source file not found: {source}")
             return False
 
-        # Create backup if requested
-        if backup_name and target.exists():
-            self.create_backup(target, backup_name)
+        # Check if target exists and handle overwrite logic
+        file_existed = target.exists()
+
+        if file_existed and not self.overwrite_existing_files:
+            print(f"⚠️ Skipped (already exists): {display_path}")
+            return True  # Return True as this is expected behavior, not an error
 
         try:
+            # Create parent directories if they don't exist
+            target.parent.mkdir(parents=True, exist_ok=True)
+
+            # Create backup if backup path is provided, backup is enabled, and file exists
+            if backup_relative_path and file_existed:
+                self.create_backup(target, backup_relative_path)
+
             with open(source, "r", encoding="utf-8") as f:
                 text = f.read()
-            text = string.Template(text).substitute(os.environ)
+
+            # Apply template substitution only if templating is enabled
+            if templating:
+                text = string.Template(text).substitute(os.environ)
+
             with open(target, "w", encoding="utf-8") as f:
                 f.write(text)
 
+            # Log success based on whether file existed before
+            action = "Updated" if file_existed else "Copied"
+            print(f"✅ {action}: {display_path}")
             return True
+
         except Exception as e:
-            print(f"❌ Error copying {source} to {target}: {e}")
+            print(f"❌ Failed to copy: {display_path} ({e})")
             return False
 
-    def create_backup(self, source_path, backup_name):
-        """Create a backup of a file or directory in the backup directory"""
-        if not self._should_backup():
+    def create_backup(self, source_path, relative_path=None):
+        """Create a backup of a file maintaining directory structure"""
+        if not self.backup_existing_config:
             return False
 
         source = Path(source_path)
         if not source.exists():
             return False
 
-        backup_dir = self._get_backup_dir()
-        backup_path = backup_dir / backup_name
+        # Create backup directory if it doesn't exist
+        self.backup_directory.mkdir(parents=True, exist_ok=True)
+
+        # Use relative path if provided, otherwise use filename
+        if relative_path:
+            backup_path = self.backup_directory / relative_path
+        else:
+            backup_path = self.backup_directory / source.name
 
         try:
+            # Create parent directories for the backup file
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
+
             if source.is_file():
                 shutil.copy2(source, backup_path)
             else:
@@ -172,6 +193,47 @@ class ObsidianSetup:
             return True
         except Exception as e:
             print(f"⚠️ Failed to backup {source}: {e}")
+            return False
+
+    def _copy_directory_contents(self, source_dir, target_dir, backup_prefix=None):
+        """Copy directory contents recursively, creating directories as needed and only overwriting files if specified"""
+        source = Path(source_dir)
+        target = Path(target_dir)
+
+        if not source.exists():
+            print(f"❌ Source directory not found: {source}")
+            return False
+
+        # Create target directory if it doesn't exist
+        target.mkdir(parents=True, exist_ok=True)
+
+        # Determine backup prefix based on source directory name if not provided
+        if backup_prefix is None:
+            backup_prefix = source.name
+
+        try:
+            success_count = 0
+            total_count = 0
+
+            for item in source.rglob("*"):
+                if item.is_file():
+                    total_count += 1
+                    # Calculate relative path from source
+                    relative_path = item.relative_to(source)
+                    target_file = target / relative_path
+
+                    # Generate backup path maintaining directory structure
+                    backup_relative_path = Path(backup_prefix) / relative_path
+
+                    # Copy file (copy_file handles all logic internally)
+                    if self.copy_file(item, target_file, backup_relative_path=backup_relative_path, relative_path=relative_path):
+                        success_count += 1
+
+            print(f"✅ Processed {backup_prefix} folder: {success_count}/{total_count} files processed successfully")
+            return success_count == total_count
+
+        except Exception as e:
+            print(f"❌ Error copying directory contents: {e}")
             return False
 
     def copy_files_to_vault(self):
@@ -188,61 +250,23 @@ class ObsidianSetup:
             print(f"❌ Source Templater folder not found: {source_templater_path}")
             return False
 
-        # Get overwrite setting from config
-        overwrite_files = self._get_config_value("setup.overwrite_existing_files", True)
-
         try:
             # Handle config.json
-            if self.config_path.exists():
-                if overwrite_files:
-                    if self.copy_file(self.source_config_path, self.config_path, "config.json"):
-                        print(f"✅ Copied config.json to: {self.config_path}")
-                    else:
-                        print(f"❌ Failed to copy config.json")
-                        return False
-                else:
-                    print(f"⚠️ Skipped config.json (already exists): {self.config_path}")
-            else:
-                if self.copy_file(self.source_config_path, self.config_path):
-                    print(f"✅ Copied config.json to: {self.config_path}")
-                else:
-                    print(f"❌ Failed to copy config.json")
-                    return False
+            if not self.copy_file(self.source_config_path, self.config_path, backup_relative_path="config.json", templating=True, relative_path="config.json"):
+                return False
 
-            # Handle Templater folder
+            # Handle Templater folder - copy files individually
             target_templater_path = self.vault_path / "Templater"
-            if target_templater_path.exists():
-                if overwrite_files:
-                    self.create_backup(target_templater_path, "Templater")
-                    # Remove existing folder
-                    shutil.rmtree(target_templater_path)
-                    shutil.copytree(source_templater_path, target_templater_path)
-                    print(f"✅ Copied Templater folder to: {target_templater_path}")
-                else:
-                    print(f"⚠️ Skipped Templater folder (already exists): {target_templater_path}")
-            else:
-                shutil.copytree(source_templater_path, target_templater_path)
-                print(f"✅ Copied Templater folder to: {target_templater_path}")
+            if not self._copy_directory_contents(source_templater_path, target_templater_path, "Templater"):
+                return False
+            print()
 
             # Handle CssSnippets folder
             source_css_snippets_path = self.source_path / "CssSnippets"
             if source_css_snippets_path.exists():
                 target_snippets_path = self.obsidian_path / "snippets"
-                target_snippets_path.mkdir(parents=True, exist_ok=True)
-
-                # Copy each CSS file from CssSnippets to .obsidian/snippets
-                for css_file in source_css_snippets_path.glob("*.css"):
-                    target_css_file = target_snippets_path / css_file.name
-                    if target_css_file.exists():
-                        if overwrite_files:
-                            self.create_backup(target_css_file, f"snippets_{css_file.name}")
-                            shutil.copy2(css_file, target_css_file)
-                            print(f"✅ Copied CSS snippet: {css_file.name}")
-                        else:
-                            print(f"⚠️ Skipped CSS snippet (already exists): {css_file.name}")
-                    else:
-                        shutil.copy2(css_file, target_css_file)
-                        print(f"✅ Copied CSS snippet: {css_file.name}")
+                if not self._copy_directory_contents(source_css_snippets_path, target_snippets_path, "CssSnippets"):
+                    return False
             else:
                 print(f"⚠️ Source CssSnippets folder not found: {source_css_snippets_path}")
 
@@ -384,11 +408,13 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python setup.py                           # Copy files and configure (current directory)
-  python setup.py /path/to/vault           # Copy files and configure (specific vault)
-  python setup.py --copy /path/to/vault    # Copy files only
+  python setup.py                           # Copy files and configure with backup (current directory)
+  python setup.py /path/to/vault           # Copy files and configure with backup (specific vault)
+  python setup.py --copy /path/to/vault    # Copy files only with backup
   python setup.py --configure /path/to/vault  # Configure plugins only
-  python setup.py --vault /path/to/vault   # Copy files and configure (explicit vault)
+  python setup.py --no-backup              # Copy and configure without creating backups
+  python setup.py --backup-dir my-backup   # Create backups in custom directory
+  python setup.py --no-overwrite           # Skip existing files instead of overwriting
         """,
     )
 
@@ -397,13 +423,6 @@ Examples:
         nargs="?",
         default=None,
         help="Path to the Obsidian vault directory (default: current directory)",
-    )
-
-    parser.add_argument(
-        "--vault",
-        "-v",
-        dest="vault_path_flag",
-        help="Path to the Obsidian vault directory (alternative to positional argument)",
     )
 
     parser.add_argument(
@@ -420,10 +439,28 @@ Examples:
         help="Configure plugins settings only (requires existing config.json in target vault)",
     )
 
+    parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Do not create backup of existing configuration files (backup is enabled by default)",
+    )
+
+    parser.add_argument(
+        "--backup-dir",
+        default=".obsidian-setup-backup",
+        help="Directory name for backups (default: .obsidian-setup-backup)",
+    )
+
+    parser.add_argument(
+        "--no-overwrite",
+        action="store_true",
+        help="Do not overwrite existing files (skip them instead)",
+    )
+
     args = parser.parse_args()
 
     # Determine vault path from arguments
-    vault_path = args.vault_path or args.vault_path_flag
+    vault_path = args.vault_path
 
     if vault_path:
         vault_path = Path(vault_path).resolve()
@@ -451,7 +488,7 @@ Examples:
             print(f"❌ Source Templater folder not found in: {source_path}")
             sys.exit(1)
 
-    setup = ObsidianSetup(vault_path, source_path)
+    setup = ObsidianSetup(vault_path=vault_path, source_path=source_path, backup_existing_config=not args.no_backup, backup_directory=args.backup_dir, overwrite_existing_files=not args.no_overwrite)
 
     try:
         success = setup.run_setup(copy_files=args.copy, configure_only=args.configure)

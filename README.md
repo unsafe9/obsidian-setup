@@ -17,11 +17,59 @@ This has only been tested on Mac. It might not work on other platforms.
 - Obsidian
 - Obsidian Templater plugin
 - Gemini API key
-  - Export your API key as `GEMINI_API_KEY` environment variable before running `setup.py`.
-  - See code referencing `tp.user.exec.gemini`
 - Gemini CLI
-  - See code referencing `tp.user.exec.geminiCli`
 - Ollama
-  - See code referencing `tp.user.exec.ollama`
 
 AI features using different providers can be interchanged with each other.
+
+## Quick Setup
+
+### Automatic Setup (Recommended)
+```bash
+# Clone the repository
+git clone <repository-url>
+cd obsidian-setup
+
+# Set up your Gemini API key
+export GEMINI_API_KEY="your-api-key-here"
+
+# Run setup in your vault directory (copies files and configures plugins)
+python setup.py /path/to/your/vault
+
+# Or run in current directory if you're already in your vault
+python setup.py
+
+# If you only want to copy files without modifying plugin settings, use --copy
+python setup.py --copy /path/to/your/vault
+```
+
+### Setup Options
+- `--no-backup`: Skip creating backups (backup is enabled by default)
+- `--backup-dir <name>`: Custom backup directory name
+- `--no-overwrite`: Skip existing files instead of overwriting
+- `--copy`: Copy files only without modifying plugin settings (use this if you don't want Templater plugin configuration to be changed)
+- `--configure`: Configure plugins only (requires existing config.json)
+
+## Project Structure
+
+### Core Components
+- **`setup.py`**: Automated setup script with backup and configuration management
+- **`config.json`**: Central configuration for paths, plugins, and AI settings
+- **`Templater/`**: Template files and JavaScript utilities
+
+### Templates
+- **`New Note.md`**: Default template for new notes
+- **`Daily Note.md`**: Template for daily notes
+- **`Startup Scripts.md`**: Scripts that run when Obsidian starts
+
+### Commands (Templater/Commands/)
+Run `Insert Template` commands from Command Palette.
+- **Extract Note**: Extract content from current note to a new note
+- **Refine Clipping**: Clean up and format web clippings using AI
+- **Rename Images**: Batch rename image files with descriptive names
+- **Suggest Tags**: AI-powered tag suggestions for notes
+- **Summarize Note**: Generate AI summaries of note content
+- **Sync H1 Title**: Synchronize note filename with H1 heading
+
+### CSS Customizations
+- **`table-row-number.css`**: Add row numbers to tables
