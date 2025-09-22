@@ -36,11 +36,8 @@ export GEMINI_API_KEY="your-api-key-here"
 # Run setup in your vault directory (copies files and configures plugins)
 python setup.py /path/to/your/vault
 
-# Or run in current directory if you're already in your vault
-python setup.py
-
 # If you only want to copy files without modifying plugin settings, use --copy
-python setup.py --copy /path/to/your/vault
+python setup.py /path/to/your/vault --copy
 ```
 
 ### Setup Options

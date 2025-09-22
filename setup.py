@@ -278,12 +278,37 @@ class ObsidianSetup:
 
     def create_folder_templates(self):
         """Create folder templates configuration based on note directories"""
-        note_dirs = self.config["paths"]["note_directories"]
-        daily_dirs = self.config["paths"]["daily_note_directories"]
-        new_note_template = self.config["paths"]["new_note_template"]
-        daily_note_template = self.config["paths"]["daily_note_template"]
+        note_dirs = self.config["paths"].get("note_directories", [])
+        daily_dirs = self.config["paths"].get("daily_note_directories", [])
+        new_note_template = self.config["paths"].get("new_note_template")
+        daily_note_template = self.config["paths"].get("daily_note_template")
 
-        return [{"folder": note_dir, "template": daily_note_template if note_dir in daily_dirs else new_note_template} for note_dir in note_dirs]
+        # If no templates are configured, return empty list
+        if not new_note_template and not daily_note_template:
+            print("⚠️ No note templates configured, skipping folder template setup")
+            return []
+
+        folder_templates = []
+        processed_dirs = set()
+
+        # Process daily note directories first (they have priority for daily_note_template)
+        for daily_dir in daily_dirs:
+            if daily_note_template:
+                folder_templates.append({"folder": daily_dir, "template": daily_note_template})
+                processed_dirs.add(daily_dir)
+            else:
+                print(f"⚠️ No daily note template configured for daily directory: {daily_dir}")
+
+        # Process remaining note directories with new_note_template
+        for note_dir in note_dirs:
+            if note_dir not in processed_dirs:
+                if new_note_template:
+                    folder_templates.append({"folder": note_dir, "template": new_note_template})
+                    processed_dirs.add(note_dir)
+                else:
+                    print(f"⚠️ No new note template configured for directory: {note_dir}")
+
+        return folder_templates
 
     def setup_templater_config(self):
         """Configure Templater plugin settings"""
@@ -408,7 +433,6 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python setup.py                           # Copy files and configure with backup (current directory)
   python setup.py /path/to/vault           # Copy files and configure with backup (specific vault)
   python setup.py --copy /path/to/vault    # Copy files only with backup
   python setup.py --configure /path/to/vault  # Configure plugins only
