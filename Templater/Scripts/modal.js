@@ -7,20 +7,25 @@
  *   - callback: Function to call when clicked
  *   - closeModal: Whether to close modal after click (default: true)
  *   - hotkey: Keyboard shortcut (e.g., "cmd+enter", "escape", "enter")
+ * @param {Object} options - Optional configuration object
+ *   - inputField: {placeholder, value, onEnter, multiline} - Add text input field
+ *     - multiline: true for textarea, false for input (default: false)
  * @returns {Promise} Promise that resolves when the modal is closed.
  */
-function modal(tp, title, content, buttons = []) {
+function modal(tp, title, content, buttons = [], options = {}) {
   class InfoModal extends tp.obsidian.Modal {
-    constructor(title, content, buttons, resolve) {
+    constructor(title, content, buttons, options, resolve) {
       super(app);
       if (title) {
         content = `# ${title}\n\n${content}`;
       }
       this.content = content;
       this.buttons = buttons;
+      this.options = options;
       this.component = new tp.obsidian.Component();
       this.resolve = resolve;
       this.keyHandler = null;
+      this.inputField = null;
     }
 
     onOpen() {
@@ -28,9 +33,82 @@ function modal(tp, title, content, buttons = []) {
 
       contentEl.empty();
 
+      // Increase modal width on desktop (non-mobile devices)
+      if (!app.isMobile) {
+        this.modalEl.style.cssText = `
+          max-width: 60vw !important;
+          width: 60vw !important;
+        `;
+
+        // Ensure content container doesn't overflow
+        contentEl.style.cssText = `
+          max-width: 100% !important;
+          overflow-x: hidden !important;
+          box-sizing: border-box !important;
+        `;
+      }
+
       // Render content
-      const contentDiv = contentEl.createDiv();
-      tp.obsidian.MarkdownRenderer.renderMarkdown(this.content, contentDiv, '', this.component);
+      const contentDiv = contentEl.createDiv({ cls: 'modal-content-div' });
+      this.renderAndStyleContent(this.content, contentDiv);
+
+      // Add input field if specified
+      if (this.options.inputField) {
+        const inputContainer = contentEl.createDiv({
+          cls: 'modal-input-container'
+        });
+        inputContainer.style.cssText = `
+          margin: 20px 0;
+          padding: 15px;
+          border: 1px solid var(--background-modifier-border);
+          border-radius: 4px;
+          background: var(--background-primary);
+        `;
+
+        const isMultiline = this.options.inputField.multiline === true;
+
+        // Create input field (textarea or input) in one go
+        this.inputField = inputContainer.createEl(
+          isMultiline ? 'textarea' : 'input',
+          {
+            ...(isMultiline ? {} : { type: 'text' }),
+            placeholder: this.options.inputField.placeholder || 'Enter text...',
+            value: this.options.inputField.value || ''
+          }
+        );
+
+        // Apply common styles with conditional multiline styles
+        this.inputField.style.cssText = `
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid var(--background-modifier-border);
+          border-radius: 3px;
+          background: var(--background-primary);
+          color: var(--text-normal);
+          font-size: 14px;
+          font-family: var(--font-interface);
+          ${isMultiline ? 'min-height: 60px; resize: vertical;' : ''}
+        `;
+
+        // Handle Enter key in input field
+        this.inputField.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            if (isMultiline && event.shiftKey) {
+              // Shift+Enter in textarea: Allow line break (default behavior)
+              return;
+            } else if (!event.metaKey && !event.ctrlKey && !event.altKey) {
+              // Plain Enter: Trigger onEnter callback
+              event.preventDefault();
+              if (this.options.inputField.onEnter) {
+                this.options.inputField.onEnter(this.inputField.value, this);
+              }
+            }
+          }
+        });
+
+        // Focus the input field
+        setTimeout(() => this.inputField.focus(), 100);
+      }
 
       // Create button container if buttons exist
       if (this.buttons && this.buttons.length > 0) {
@@ -81,6 +159,43 @@ function modal(tp, title, content, buttons = []) {
 
       // Set up keyboard event handler
       this.setupKeyboardHandler();
+    }
+
+    updateContent(newContent) {
+      // Find the content div and update it
+      const contentDiv = this.contentEl.querySelector('.modal-content-div');
+      if (contentDiv) {
+        contentDiv.empty();
+        this.renderAndStyleContent(newContent, contentDiv);
+      }
+    }
+
+    renderAndStyleContent(content, contentDiv) {
+      // Render markdown content
+      tp.obsidian.MarkdownRenderer.renderMarkdown(content, contentDiv, '', this.component);
+
+      // Apply all content styling (code blocks, etc.)
+      this.applyContentStyling(contentDiv);
+    }
+
+    applyContentStyling(container) {
+      // Apply code block styling
+      const preElements = container.querySelectorAll('pre');
+      preElements.forEach(pre => {
+        pre.style.cssText = `
+          max-height: 400px !important;
+          overflow-y: auto !important;
+          overflow-x: hidden !important;
+          white-space: pre-wrap !important;
+          word-wrap: break-word !important;
+          overflow-wrap: break-word !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        `;
+      });
+
+      // Future styling requirements can be added here
+      // e.g., table styling, image styling, etc.
     }
 
     setupKeyboardHandler() {
@@ -153,7 +268,7 @@ function modal(tp, title, content, buttons = []) {
   }
 
   return new Promise((resolve) => {
-    new InfoModal(title, content, buttons, resolve).open();
+    new InfoModal(title, content, buttons, options, resolve).open();
   });
 }
 
