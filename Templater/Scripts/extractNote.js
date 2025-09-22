@@ -42,12 +42,9 @@ ${selection}
 `;
 
   // Create the new note
-  await tp.file.create_new(content, newTitle, false, chosenPath);
-
-  // Replace the original selection with a link to the new note
-  tp.app.workspace.activeLeaf.view.editor.replaceSelection(`[[${newTitle}]]`);
-
+  const file = await tp.file.create_new(content, newTitle, false, chosenPath);
   new Notice(`Note "${newTitle}" has been created in "${chosenPath}".`);
+  return file;
 }
 
 module.exports = extractNote;

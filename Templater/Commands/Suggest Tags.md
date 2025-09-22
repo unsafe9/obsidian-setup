@@ -15,4 +15,6 @@ await tp.app.fileManager.processFrontMatter(file, (frontmatter) => {
 
   frontmatter.tags = allTags;
 });
+
+return;
 _%>

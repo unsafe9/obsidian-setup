@@ -109,6 +109,6 @@ if (finalAction === 'replace' && editedText) {
   tR = selectedText + '\n' + editedText;
   new Notice("Text inserted below successfully!");
 } else {
-  tR = tp.file.selection();
+  return;
 }
 _%>

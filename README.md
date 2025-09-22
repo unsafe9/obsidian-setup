@@ -74,3 +74,10 @@ Run `Insert Template` commands from Command Palette.
 
 ### CSS Customizations
 - **`table-row-number.css`**: Add row numbers to tables
+
+## Development Notes
+
+### Adding New Commands
+When creating new Templater commands that are executed via "Insert Template" command:
+
+⚠️ **Important**: The "Insert Template" command always replaces the selection (or inserts at cursor) with the `tR` variable content. To preserve selected text when no changes are made, use `return;` to cancel template execution.
