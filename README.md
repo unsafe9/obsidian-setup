@@ -64,6 +64,7 @@ python setup.py --copy /path/to/your/vault
 
 ### Commands (Templater/Commands/)
 Run `Insert Template` commands from Command Palette.
+- **AI Text Editor**: Interactive AI-powered text editing with replace/insert options
 - **Extract Note**: Extract content from current note to a new note
 - **Refine Clipping**: Clean up and format web clippings using AI
 - **Rename Images**: Batch rename image files with descriptive names

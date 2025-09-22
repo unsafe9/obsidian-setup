@@ -12,10 +12,6 @@ await tp.user.modal(tp, `Summary of '${file.basename}'`, '```markdown\n' + summa
       navigator.clipboard.writeText(summary);
       new Notice("Summary copied to clipboard!");
     }
-  },
-  {
-    text: "Close",
-    hotkey: "escape",
   }
 ]);
 _%>
