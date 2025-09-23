@@ -5,10 +5,9 @@ async function relocateNewNote(tp, file, inheritTags = true) {
   // Find the source file that has a backlink to this note and was opened very recently.
   let sourceFile = null;
   const backlinks = tp.app.metadataCache.getBacklinksForFile(file);
-  const linkerPaths = Object.keys(backlinks.data);
-  if (linkerPaths.length > 0) {
+  if (backlinks.data.size > 0) {
     const recentFiles = tp.app.workspace.recentFileTracker.lastOpenFiles;
-    const sourcePath = recentFiles.find(path => linkerPaths.includes(path));
+    const sourcePath = recentFiles.find(path => backlinks.data.has(path));
     if (sourcePath) {
       sourceFile = tp.app.vault.getAbstractFileByPath(sourcePath);
     }
