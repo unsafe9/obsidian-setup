@@ -17,10 +17,10 @@ async function editText(tp, selectedText, editPrompt, sessionId = null) {
 
   try {
     const result = await tp.user.exec.ai(tp, {
-      // provider: 'gemini',
-      // model: 'gemini-2.5-flash-lite',
-      provider: 'ollama',
-      model: 'gemma3:12b',
+      provider: 'gemini',
+      model: 'gemini-2.5-flash-lite',
+      // provider: 'ollama',
+      // model: 'gemma3:12b',
       sessionId: sessionId,
       prompt: editPrompt,
       thinking: false,
