@@ -19,7 +19,11 @@
     "commands_folder": "Templater/Commands",
     "new_note_template": "Templater/New Note.md",
     "startup_template": "Templater/Startup Scripts.md",
-    "daily_note_template": "Templater/Daily Note.md"
+    "daily_note_template": "Templater/Daily Note.md",
+    "sensitive": [
+      "Secret/",
+      ".env"
+    ]
   },
   "ai": {
     "gemini_api_key": "${GEMINI_API_KEY}"
