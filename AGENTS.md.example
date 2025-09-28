@@ -18,7 +18,7 @@ This is my Obsidian vault, which is the file storage for my note-taking app.
 
 - Use title case with spaces for note file names matching the H1 heading.
 - YAML frontmatter properties
-  - `tags`: List of tags
+  - `tags`: List of tags. Use lower case with hyphens.
   - `aliases`: List of aliases. Use only when the note needs alternative names.
   - `created`: Date and time of the note creation. Use `YYYY-MM-DD HH:mm` format.
   - `source`: Source of the note. Use `[[Wiki-Links]]` format.
@@ -35,9 +35,9 @@ When I initiate a new research topic, begin this phase.
 
 1. **Acknowledge Request:** Confirm the research topic with me.
 2. **Establish the File Structure:** Immediately create the following directory structure:
-    - `[Research Title]/`
-    - `[Research Title]/Prompt.md`
-    - `[Research Title]/Materials/`
+    - `Notes/[Research Title]/`
+    - `Notes/[Research Title]/Prompt.md`
+    - `Notes/[Research Title]/Materials/`
 
 #### Phase 2: Research Plan & Sourcing Strategy
 

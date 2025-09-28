@@ -270,12 +270,21 @@ class ObsidianSetup:
             else:
                 print(f"⚠️ Source CssSnippets folder not found: {source_css_snippets_path}")
 
-            # Handle .gemini folder
+            # Handle .gemini folder (with template substitution)
             source_gemini_path = self.source_path / ".gemini"
             if source_gemini_path.exists():
                 target_gemini_path = self.vault_path / ".gemini"
-                if not self._copy_directory_contents(source_gemini_path, target_gemini_path, ".gemini"):
-                    return False
+                target_gemini_path.mkdir(parents=True, exist_ok=True)
+
+                # Copy .gemini files individually with template substitution
+                for item in source_gemini_path.rglob("*"):
+                    if item.is_file():
+                        relative_path = item.relative_to(source_gemini_path)
+                        target_file = target_gemini_path / relative_path
+                        backup_relative_path = Path(".gemini") / relative_path
+
+                        if not self.copy_file(item, target_file, backup_relative_path=backup_relative_path, templating=True, relative_path=f".gemini/{relative_path}"):
+                            return False
             else:
                 print(f"⚠️ Source .gemini folder not found: {source_gemini_path}")
 
@@ -635,6 +644,9 @@ Examples:
             sys.exit(1)
 
     setup = ObsidianSetup(vault_path=vault_path, source_path=source_path, backup_existing_config=not args.no_backup, backup_directory=args.backup_dir, overwrite_existing_files=not args.no_overwrite)
+
+    # Set VAULT_PATH environment variable for template substitution
+    os.environ["VAULT_PATH"] = str(setup.vault_path)
 
     try:
         success = setup.run_setup(copy_files=args.copy, configure_only=args.configure, ignore_files_only=args.ignore_files)
