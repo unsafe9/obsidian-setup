@@ -1,0 +1,26 @@
+# AGENTS
+
+This is my Obsidian vault, which is the file storage for my note-taking app.
+
+## Vault Outline
+
+- `Notes/`: Notes currently being worked on
+- `Notes/Ideas/`: Drafts of ideas not being evolved as projects
+- `Archives/`: Archived old notes
+- `Daily Notes/`: Daily notes for quick note (not for journaling)
+- `Clippings/`: Collected notes from websites
+- `Attachments/`: Attached files
+- `Templates/`: Note templates for plugins
+- `Scratchpad`: Quick notes
+- `.obsidian/`: Vault specific Obsidian settings
+
+## Conventions
+
+- Use title case with spaces for note file names matching the H1 heading.
+- YAML frontmatter properties
+  - `tags`: List of tags
+  - `aliases`: List of aliases. Use only when the note needs alternative names.
+  - `created`: Date and time of the note creation. Use `YYYY-MM-DD HH:mm` format.
+  - `source`: Source of the note. Use `[[Wiki-Links]]` format.
+
+## Workflows

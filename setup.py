@@ -288,6 +288,15 @@ class ObsidianSetup:
             else:
                 print(f"⚠️ Source gemini.sh file not found: {source_gemini_sh}")
 
+            # Handle AGENTS.md.example file (copy as AGENTS.md)
+            source_agents_example = self.source_path / "AGENTS.md.example"
+            if source_agents_example.exists():
+                target_agents = self.vault_path / "AGENTS.md"
+                if not self.copy_file(source_agents_example, target_agents, backup_relative_path="AGENTS.md", relative_path="AGENTS.md"):
+                    return False
+            else:
+                print(f"⚠️ Source AGENTS.md.example file not found: {source_agents_example}")
+
             return True
 
         except Exception as e:
@@ -620,6 +629,9 @@ Examples:
             sys.exit(1)
         if not (source_path / "gemini.sh").exists():
             print(f"❌ Source gemini.sh file not found in: {source_path}")
+            sys.exit(1)
+        if not (source_path / "AGENTS.md.example").exists():
+            print(f"❌ Source AGENTS.md.example file not found in: {source_path}")
             sys.exit(1)
 
     setup = ObsidianSetup(vault_path=vault_path, source_path=source_path, backup_existing_config=not args.no_backup, backup_directory=args.backup_dir, overwrite_existing_files=not args.no_overwrite)
