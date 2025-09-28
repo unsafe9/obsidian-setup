@@ -270,6 +270,24 @@ class ObsidianSetup:
             else:
                 print(f"⚠️ Source CssSnippets folder not found: {source_css_snippets_path}")
 
+            # Handle .gemini folder
+            source_gemini_path = self.source_path / ".gemini"
+            if source_gemini_path.exists():
+                target_gemini_path = self.vault_path / ".gemini"
+                if not self._copy_directory_contents(source_gemini_path, target_gemini_path, ".gemini"):
+                    return False
+            else:
+                print(f"⚠️ Source .gemini folder not found: {source_gemini_path}")
+
+            # Handle gemini.sh file
+            source_gemini_sh = self.source_path / "gemini.sh"
+            if source_gemini_sh.exists():
+                target_gemini_sh = self.vault_path / "gemini.sh"
+                if not self.copy_file(source_gemini_sh, target_gemini_sh, backup_relative_path="gemini.sh", relative_path="gemini.sh"):
+                    return False
+            else:
+                print(f"⚠️ Source gemini.sh file not found: {source_gemini_sh}")
+
             return True
 
         except Exception as e:
@@ -596,6 +614,12 @@ Examples:
             sys.exit(1)
         if not (source_path / "Templater").exists():
             print(f"❌ Source Templater folder not found in: {source_path}")
+            sys.exit(1)
+        if not (source_path / ".gemini").exists():
+            print(f"❌ Source .gemini folder not found in: {source_path}")
+            sys.exit(1)
+        if not (source_path / "gemini.sh").exists():
+            print(f"❌ Source gemini.sh file not found in: {source_path}")
             sys.exit(1)
 
     setup = ObsidianSetup(vault_path=vault_path, source_path=source_path, backup_existing_config=not args.no_backup, backup_directory=args.backup_dir, overwrite_existing_files=not args.no_overwrite)
