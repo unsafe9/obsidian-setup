@@ -24,3 +24,59 @@ This is my Obsidian vault, which is the file storage for my note-taking app.
   - `source`: Source of the note. Use `[[Wiki-Links]]` format.
 
 ## Workflows
+
+### Research Agent Protocol
+
+This protocol outlines the advanced workflow for conducting in-depth research. The goal is to function as an intelligent agent, moving beyond simple information retrieval to systematic analysis and synthesis by following these steps.
+
+#### Phase 1: Project Initialization
+
+When I initiate a new research topic, begin this phase.
+
+1. **Acknowledge Request:** Confirm the research topic with me.
+2. **Establish the File Structure:** Immediately create the following directory structure:
+    - `[Research Title]/`
+    - `[Research Title]/Prompt.md`
+    - `[Research Title]/Materials/`
+
+#### Phase 2: Research Plan & Sourcing Strategy
+
+This is the strategic planning phase. The goal is to fully understand my intent and create a detailed, actionable research plan.
+
+1. **Engage in Dialogue:** Engage me in a dialogue to understand the project's core requirements:
+    - The primary **purpose** and **scope**.
+    - The key **questions** to answer.
+    - The required depth (**technical, academic, bleeding-edge**).
+2. **Decompose the Core Question:** Based on our dialogue, break down the main research topic into a logical set of **sub-questions and hypotheses**. This will form the backbone of the research plan.
+3. **Propose a Sourcing Strategy:** Proactively suggest and finalize a sourcing strategy with me, recommending high-quality sources (Academic Databases, Official Documentation, etc.) relevant to the topic.
+4. **Document the Plan in `Prompt.md`:** Update **`Prompt.md`** with the complete research plan, including:
+    - The overarching goal.
+    - The decomposed list of sub-questions to investigate.
+    - The agreed-upon sourcing strategy.
+
+#### Phase 3: Execution via Iterative Research (ReAct Cycle)
+
+This is the dynamic execution phase. Follow the ReAct (Reason-Act-Observe) cycle to execute the plan from `Prompt.md`.
+
+- **For each sub-question in the research plan:**
+    1. **Reason (Thought):** Start by thinking about the best way to answer the current sub-question. `Thought: To answer 'What are the main types of PQC algorithms?', I should first search academic sources for a general overview.`
+    2. **Act (Action):** Execute a search on the prioritized sources. `Action: web_search(query="types of post-quantum cryptography algorithms review", sources=["arxiv.org", "scholar.google.com"])`
+    3. **Observe (Observation):** Analyze the search results, identify key documents, and save them as atomic, non-redundant markdown files in the **`Materials/`** directory. `Observation: Found three highly-cited review papers. Saving them as 'PQC_LatticeBased.md', 'PQC_CodeBased.md', 'PQC_HashBased.md'.`
+    4. **Iterate:** Repeat this cycle, refining thoughts and actions based on observations until the sub-question is sufficiently answered, before moving to the next one.
+
+#### Phase 4: Synthesis & Self-Correction
+
+This phase begins when I ask to synthesize the collected materials.
+
+1. **Consult the Guides:** Read **`Prompt.md`** to re-align with the project's main goal and review all relevant files in the **`Materials/`** directory.
+2. **Generate Initial Draft:** Synthesize the information to create a draft answering my request (e.g., a summary, a new note, an analysis).
+3. **Perform Self-Correction & Critique:** Before presenting the final output, perform a self-correction step. Review the draft against a checklist:
+    - **Goal Alignment:** Does the draft directly address my original request and the goals in `Prompt.md`?
+    - **Accuracy & Depth:** Is the information accurate and based on the collected materials? Are any key details missing?
+    - **Clarity & Structure:** Is the content well-organized, logical, and easy to understand?
+    - Refine the draft based on this critique until it meets a high standard.
+4. **Deliver Final Output:** Provide the final, refined output to me.
+
+#### Core Directive: Session Persistence & Context Restoration
+
+This is the most critical instruction. The **`Prompt.md`** file serves as the agent's memory. At the beginning of any new session, **the absolute first step is to read the `Prompt.md` file in its entirety** to restore the complete project plan and context.
