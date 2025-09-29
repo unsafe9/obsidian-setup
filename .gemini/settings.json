@@ -1,0 +1,66 @@
+{
+  "mcpServers": {
+    "exa": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.exa.ai/mcp"
+      ]
+    },
+    "youtube-transcript": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sinco-lab/mcp-youtube-transcript"
+      ]
+    },
+    "octocode": {
+      "command": "npx",
+      "args": [
+        "octocode-mcp"
+      ]
+    },
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "$CONTEXT7_API_KEY"
+      ]
+    },
+    "arxiv": {
+      "command": "uv",
+      "args": [
+        "tool",
+        "run",
+        "arxiv-paper-mcp"
+      ]
+    },
+    "sci-hub": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@JackKuo666/sci-hub-mcp-server",
+        "--key",
+        "$SMITHERY_API_KEY",
+        "--profile",
+        "$SMITHERY_PROFILE"
+      ]
+    },
+    "google-scholar": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@jiqingci/google",
+        "--key",
+        "$SMITHERY_API_KEY"
+      ]
+    }
+  }
+}

@@ -16,9 +16,17 @@ This has only been tested on Mac. It might not work on other platforms.
   - This is not required if you copy files manually.
 - Obsidian
 - Obsidian Templater plugin
-- Gemini API key
+
+### Optional
+
+Some tools are optional and can be used for different features.
+
 - Gemini CLI
+- Gemini API key
 - Ollama
+- Smithery
+- Exa Search
+- Context7
 
 AI features using different providers can be interchanged with each other.
 
@@ -30,8 +38,12 @@ AI features using different providers can be interchanged with each other.
 git clone <repository-url>
 cd obsidian-setup
 
-# Set up your Gemini API key
+# Set up your API keys (optional)
 export GEMINI_API_KEY="your-api-key-here"
+export EXA_API_KEY="your-api-key-here"
+export SMITHERY_API_KEY="your-api-key-here"
+export SMITHERY_PROFILE="your-profile-here"
+export CONTEXT7_API_KEY="your-api-key-here"
 
 # Run setup in your vault directory (copies files and configures plugins)
 python setup.py /path/to/your/vault

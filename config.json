@@ -22,6 +22,8 @@
     "daily_note_template": "Templater/Daily Note.md",
     "sensitive": [
       "Secret/",
+      "Templater/Scripts/",
+      ".obsidian-setup-backup/",
       ".env"
     ]
   },
