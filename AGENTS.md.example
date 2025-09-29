@@ -48,7 +48,13 @@ This is the strategic planning phase. The goal is to fully understand my intent 
     - The key **questions** to answer.
     - The required depth (**technical, academic, bleeding-edge**).
 2. **Decompose the Core Question:** Based on our dialogue, break down the main research topic into a logical set of **sub-questions and hypotheses**. This will form the backbone of the research plan.
-3. **Propose a Sourcing Strategy:** Proactively suggest and finalize a sourcing strategy with me, recommending high-quality sources (Academic Databases, Official Documentation, etc.) relevant to the topic.
+3. **Propose a Sourcing Strategy:** Proactively suggest and finalize a sourcing strategy with me, recommending high-quality sources and MCP tools relevant to the topic:
+    - **Academic Sources:** arXiv papers, Google Scholar, Sci-Hub for full-text access
+    - **Web Content:** Exa for high-quality web discovery, general web search for broad coverage
+    - **Multimedia:** YouTube transcripts for video content analysis
+    - **Code & Documentation:** GitHub repositories via Octocode
+    - **Specialized Knowledge:** Context7 for domain-specific queries
+    - **Vault Integration:** Existing notes search for building upon previous work
 4. **Document the Plan in `Prompt.md`:** Update **`Prompt.md`** with the complete research plan, including:
     - The overarching goal.
     - The decomposed list of sub-questions to investigate.
@@ -60,7 +66,10 @@ This is the dynamic execution phase. Follow the ReAct (Reason-Act-Observe) cycle
 
 - **For each sub-question in the research plan:**
     1. **Reason (Thought):** Start by thinking about the best way to answer the current sub-question. `Thought: To answer 'What are the main types of PQC algorithms?', I should first search academic sources for a general overview.`
-    2. **Act (Action):** Execute a search on the prioritized sources. `Action: web_search(query="types of post-quantum cryptography algorithms review", sources=["arxiv.org", "scholar.google.com"])`
+    2. **Act (Action):** Execute searches using available MCP tools:
+        - **Academic Research:** `arxiv`, `google-scholar`, `sci-hub` for papers and scholarly content
+        - **Web Content Discovery:** `web_search_exa`, `google_web_search` for web sources and multimedia content. You can get youtube transcripts with `get_transcripts`.
+        - **Code & Documentation:** `octocode`, `context7`, `get_code_context_exa` for GitHub repositories and specialized knowledge
     3. **Observe (Observation):** Analyze the search results by retrieving full content of promising sources and checking for existing related notes in the vault. Use appropriate tools to find specific patterns or references. Identify key documents and extract relevant information. `Observation: Found three highly-cited review papers on post-quantum cryptography algorithms.`
     4. **Assess Completeness:** Evaluate whether the collected information adequately answers the current sub-question. If the information is insufficient or reveals the need for additional research directions, return to **Phase 2** to refine the research plan, add new sub-questions, or adjust the sourcing strategy before continuing.
     5. **Save & Document:** Create and save research findings as well-structured notes within the `Notes/[Research Title]/` folder structure. These should be comprehensive notes that synthesize the collected information and answer the current sub-question, not just raw materials. Follow the user's specific instructions for note structure, content organization, and formatting preferences. Ensure each note has proper headings, metadata, and clear organization. `Action: Creating 'PQC_Algorithm_Types.md', 'PQC_Security_Analysis.md', 'PQC_Implementation_Challenges.md' as research findings.`
@@ -70,7 +79,7 @@ This is the dynamic execution phase. Follow the ReAct (Reason-Act-Observe) cycle
 
 This phase begins when I ask to synthesize the collected materials.
 
-1. **Consult the Guides:** Read **`Prompt.md`** to re-align with the project's main goal and review all relevant files in the **`Materials/`** directory.
+1. **Consult the Guides:** Read **`Prompt.md`** to re-align with the project's main goal and review all relevant files in the **`Materials/`** directory. Cross-reference with vault search to ensure comprehensive coverage of existing knowledge.
 2. **Generate Initial Draft:** Synthesize the information to create a draft answering my request (e.g., a summary, a new note, an analysis).
 3. **Perform Self-Correction & Critique:** Before presenting the final output, perform a self-correction step. Review the draft against a checklist:
     - **Goal Alignment:** Does the draft directly address my original request and the goals in `Prompt.md`?

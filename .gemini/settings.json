@@ -30,34 +30,13 @@
         "$CONTEXT7_API_KEY"
       ]
     },
-    "arxiv": {
-      "command": "uv",
-      "args": [
-        "tool",
-        "run",
-        "arxiv-paper-mcp"
-      ]
-    },
-    "sci-hub": {
+    "paper-search": {
       "command": "npx",
       "args": [
         "-y",
         "@smithery/cli@latest",
         "run",
-        "@JackKuo666/sci-hub-mcp-server",
-        "--key",
-        "$SMITHERY_API_KEY",
-        "--profile",
-        "$SMITHERY_PROFILE"
-      ]
-    },
-    "google-scholar": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@smithery/cli@latest",
-        "run",
-        "@jiqingci/google",
+        "@openags/paper-search-mcp",
         "--key",
         "$SMITHERY_API_KEY"
       ]
