@@ -85,6 +85,8 @@ A brief overview of the main concept discussed in this note.
 - A list of key points.
 - Can include tasks `- [ ] Unfinished task`.
 - Or `- [x] Finished task`.
+- Example: This concept relates to [[Machine Learning]] and [[Data Science]] methodologies.
+- Another example: The [[Neural Network]] architecture uses [[Backpropagation]] for training.
 
 ### Visualization
 ```mermaid
@@ -95,8 +97,8 @@ graph TD;
 ```
 
 ### Related Notes
-- [[Related Note 1]]
-- [[Related Note 2]]
+- [[Related Note 1]] - Optional: Use when you want to explicitly list related concepts
+- [[Related Note 2]] - Or embed links naturally in the content above
 
 ### References
 [^1]: Citation details with [linked text](url) and all source information

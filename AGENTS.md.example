@@ -61,8 +61,10 @@ This is the dynamic execution phase. Follow the ReAct (Reason-Act-Observe) cycle
 - **For each sub-question in the research plan:**
     1. **Reason (Thought):** Start by thinking about the best way to answer the current sub-question. `Thought: To answer 'What are the main types of PQC algorithms?', I should first search academic sources for a general overview.`
     2. **Act (Action):** Execute a search on the prioritized sources. `Action: web_search(query="types of post-quantum cryptography algorithms review", sources=["arxiv.org", "scholar.google.com"])`
-    3. **Observe (Observation):** Analyze the search results, identify key documents, and save them as atomic, non-redundant markdown files in the **`Materials/`** directory. `Observation: Found three highly-cited review papers. Saving them as 'PQC_LatticeBased.md', 'PQC_CodeBased.md', 'PQC_HashBased.md'.`
-    4. **Iterate:** Repeat this cycle, refining thoughts and actions based on observations until the sub-question is sufficiently answered, before moving to the next one.
+    3. **Observe (Observation):** Analyze the search results by retrieving full content of promising sources and checking for existing related notes in the vault. Use appropriate tools to find specific patterns or references. Identify key documents and extract relevant information. `Observation: Found three highly-cited review papers on post-quantum cryptography algorithms.`
+    4. **Assess Completeness:** Evaluate whether the collected information adequately answers the current sub-question. If the information is insufficient or reveals the need for additional research directions, return to **Phase 2** to refine the research plan, add new sub-questions, or adjust the sourcing strategy before continuing.
+    5. **Save & Document:** Create and save research findings as well-structured notes within the `Notes/[Research Title]/` folder structure. These should be comprehensive notes that synthesize the collected information and answer the current sub-question, not just raw materials. Follow the user's specific instructions for note structure, content organization, and formatting preferences. Ensure each note has proper headings, metadata, and clear organization. `Action: Creating 'PQC_Algorithm_Types.md', 'PQC_Security_Analysis.md', 'PQC_Implementation_Challenges.md' as research findings.`
+    6. **Iterate:** If the information is sufficient, repeat this cycle for the next sub-question. If not, return to Phase 2 for plan refinement.
 
 #### Phase 4: Synthesis & Self-Correction
 
